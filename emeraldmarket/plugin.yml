@@ -1,0 +1,60 @@
+name: EmeraldMarket
+main: com.flashofsilver.emeraldmarket.emeraldmarket
+version: 0.2
+depend: [Vault]
+commands:
+   emeraldmarket:
+      description: Base EM command
+      usage: /emeraldmarket [buy/sell] [number] [price]
+      permission: emeraldmarket.basic.*
+      permission-message: You don't have permission to use this.
+      aliases: [em]
+   emeraldmarketbuy:
+      description: EM - Buy emeralds from the open market
+      usage: /emeraldmarketbuy [price] [number]
+      permission: emeraldmarket.basic.takeoffer
+      permission-message: You don't have permission to buy emeralds.
+      aliases: [emb]
+   emeraldmarketsell:
+      description: EM - Sell emeralds from the open market
+      usage: /emeraldmarketsell [price] [number]
+      permission: emeraldmarket.basic.makeoffer
+      permission-message: You don't have permission to sell emeralds.
+      aliases: [ems]
+   emeraldmarketadmin:
+      description: EM - Admin settings
+      usage: /emeraldmarketadmin [NOT READY]
+      permission: emeraldmarket.admin.settings
+      permission-message: You don't have permission to administrate the market.
+      aliases: [ema]
+permissions:
+    emeraldmarket.*:
+        description: Gives access to all emerald market commands
+        children:
+            emeraldmarket.basic: true
+            emeraldmarket.admin: true
+    emeraldmarket.basic.*:
+        description: Allows you to buy and sell on the emerald market
+        default: true
+        children:
+            emeraldmarket.basic.makeoffer: true
+            emeraldmarket.basic.takeoffer: true
+    emeraldmarket.basic.makeoffer:
+        description: Allows you to make offers using this plugin (sell)
+        default: true
+    emeraldmarket.basic.takeoffer:
+        description: Allows you to take offers using this plugin (buy)
+        default: true
+    emeraldmarket.admin.*:
+        default: op
+        description: Allows use of all admin commands
+        children:
+            emeraldmarket.admin.offers: true
+            emeraldmarket.admin.settings: true
+    emeraldmarket.admin.offers:
+        default: op
+        description: Allows market administration (endless offers, for instance)
+    emeraldmarket.admin.settings:
+        default: op
+        description: Allows editing, saving and reloading of the configuration
+            

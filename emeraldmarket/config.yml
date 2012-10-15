@@ -1,0 +1,7 @@
+# Don't touch the value of firstrun!
+firstrun: true
+
+verboselogging: false
+URL: 'mysql://localhost:3306/c2ordos'
+Username: 'c2ordos'
+Password: '0rd0s1001'
