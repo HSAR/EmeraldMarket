@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.text.DecimalFormat;
 import java.util.Date;
 import java.util.logging.Logger;
 
@@ -33,6 +34,8 @@ public class emeraldmarket extends JavaPlugin {
 	private String URL;
 	private String dbUser;
 	private String dbPass;
+	// currency format
+	DecimalFormat currency = new DecimalFormat("#.##");
 
 	private Connection connection;
 
@@ -294,7 +297,7 @@ public class emeraldmarket extends JavaPlugin {
 										+ " ORDER BY date ASC;");
 						rs.first(); // move to first row
 						sender.sendMessage(ChatColor.WHITE + " "
-								+ Double.toString(currprice) + ChatColor.GRAY
+								+ currency.format(currprice) + ChatColor.GRAY
 								+ " - " + ChatColor.DARK_GREEN
 								+ rs.getString("alias") + ChatColor.GRAY
 								+ " - " + ChatColor.WHITE
@@ -332,9 +335,9 @@ public class emeraldmarket extends JavaPlugin {
 				// continue querying to find the offer at the "top of the pile"
 				// defined by "oldest offer" for that particular price point.
 				// write the header, then write the rest as they come in.
-				sender.sendMessage(ChatColor.DARK_GREEN + "========= "
-						+ ChatColor.WHITE + "OFFERS TO SELL"
-						+ ChatColor.DARK_GREEN + " =========");
+				sender.sendMessage(ChatColor.DARK_GREEN + "======== "
+						+ ChatColor.WHITE + "EMERALDS FOR SALE"
+						+ ChatColor.DARK_GREEN + " ========");
 				// find the number of repeats to do
 				// 5 (arbitrary low number)
 				// or the number of rows in the result set, whichever is lower.
@@ -344,28 +347,26 @@ public class emeraldmarket extends JavaPlugin {
 				} else {
 					numreps = 5;
 				}
-				// move cursor before line 1
 				resultset.beforeFirst();
-				for (int i = 0; i < numreps; i++) {
+				for (int i = 1; i < (numreps + 1); i++) {
 					// cycle to next row
 					if (resultset.next()) {
 						double currprice = resultset.getDouble("price");
 						Statement s = connection.createStatement(
 								ResultSet.TYPE_SCROLL_SENSITIVE,
 								ResultSet.CONCUR_READ_ONLY);
-						ResultSet rs = s
-								.executeQuery("SELECT alias, date FROM emeraldmarket_sell "
+						ResultSet amountRS = s
+								.executeQuery("SELECT COUNT(price) FROM emeraldmarket_sell "
 										+ "WHERE price = "
-										+ Double.toString(currprice)
-										+ " ORDER BY date ASC;");
-						rs.first(); // move to first row
-						sender.sendMessage(ChatColor.WHITE + " "
-								+ Double.toString(currprice) + ChatColor.GRAY
-								+ " - " + ChatColor.DARK_GREEN
-								+ rs.getString("alias") + ChatColor.GRAY
-								+ " - " + ChatColor.WHITE
-								+ this.getDateDiff(rs.getTimestamp("date"))
-								+ " ago");
+										+ Double.toString(currprice) + ";");
+						amountRS.first(); // move to first row
+						sender.sendMessage(ChatColor.GRAY + Integer.toString(i)
+								+ ". " + ChatColor.WHITE
+								+ Double.toString(currprice) + " "
+								+ econ.currencyNamePlural() + ChatColor.GRAY
+								+ " (" + ChatColor.DARK_GREEN
+								+ amountRS.getString("COUNT(price)")
+								+ " on offer" + ChatColor.GRAY + ") ");
 						s.close();
 					}
 				}
@@ -512,7 +513,6 @@ public class emeraldmarket extends JavaPlugin {
 				PlayerInventory inventory = player.getInventory();
 				ItemStack itemstack = new ItemStack(Material.EMERALD,
 						Integer.parseInt(args[1]));
-				sender.sendMessage(args[1]);
 				// if the inventory contains the right amount of emeralds...
 				// begin.
 				if (inventory.contains(itemstack)) {
@@ -626,10 +626,14 @@ public class emeraldmarket extends JavaPlugin {
 									sender.getName(), 1.05);
 							if (r.transactionSuccess()) {
 								sender.sendMessage(ChatColor.YELLOW
-										+ "Placed buy offer for " + args[1]
-										+ " emeralds " + " at " + args[0]
+										+ "Placed buy offer for "
+										+ args[0]
+										+ " emeralds "
+										+ " at "
+										+ currency.format(Double
+												.parseDouble(args[0]))
 										+ "/emerald.");
-								
+
 							} else {
 								sender.sendMessage(String.format(
 										"An error occured: %s", r.errorMessage));
