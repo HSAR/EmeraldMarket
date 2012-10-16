@@ -72,8 +72,8 @@ public class emeraldmarket extends JavaPlugin {
 									+ "', '"
 									+ testalias + "');");
 					if (verbose) {
-						logger.info("Added user " + sender.getName()
-								+ " to alias table under " + testalias);
+						logger.info("Added user '" + sender.getName()
+								+ "' to alias table under '" + testalias+"'");
 					}
 					// close things down.
 					if (statement != null) {
@@ -146,8 +146,8 @@ public class emeraldmarket extends JavaPlugin {
 								+ args[1]
 								+ "');");
 				if (verbose) {
-					logger.info(sender.getName() + " forcibly added user "
-							+ args[0] + " to alias table under " + args[0]);
+					logger.info(sender.getName() + " forcibly added user '"
+							+ args[0] + "' to alias table under '" + args[0]+"'");
 				}
 				// close things down.
 				if (statement != null) {
@@ -159,13 +159,21 @@ public class emeraldmarket extends JavaPlugin {
 				return true;
 			} else {
 				// if the user is in the table already then UPDATE table.
+				logger.info("UPDATE emeraldmarket_aliases SET masteralias = '"
+						+ args[1]
+						+ "' WHERE user = '"
+						+ args[0]
+						+ "';");
 				statement
 				.executeUpdate("UPDATE emeraldmarket_aliases SET masteralias = '"
 						+ args[1]
 						+ "' WHERE user = '"
 						+ args[0]
 						+ "';");
-
+				if (verbose) {
+					logger.info(sender.getName() + " forcibly changed user '"
+							+ args[0] + "' in alias table to '" + args[0]+"'");
+				}
 				if (statement != null) {
 					statement.close();
 				}
