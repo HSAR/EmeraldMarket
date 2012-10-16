@@ -77,19 +77,26 @@ public class emeraldmarket extends JavaPlugin {
 					}
 				} else {
 					String result = resultset.getString("username");
-					if (statement != null) {
-						statement.close();
-					}
-					if (resultset != null) {
-						resultset.close();
-					}
 					if (getResultSetNumRows(resultset) == 1) {
 						// Only one player by that name, handle as
 						// normal
+						if (statement != null) {
+							statement.close();
+						}
+						if (resultset != null) {
+							resultset.close();
+						}
 						return result;
 					} else {
+						if (statement != null) {
+							statement.close();
+						}
+						if (resultset != null) {
+							resultset.close();
+						}
 						// Multiple players were found, warn the sender
 						sender.sendMessage(ChatColor.RED + "Multiple returns for '" + input + "'");
+						return null;
 					}
 				}
 				// close things down.
@@ -130,17 +137,23 @@ public class emeraldmarket extends JavaPlugin {
 					return null;
 				} else {
 					String result = resultset.getString("user");
-					if (statement != null) {
-						statement.close();
-					}
-					if (resultset != null) {
-						resultset.close();
-					}
 					if (getResultSetNumRows(resultset) == 1) {
 						// Only one player by that name, handle as
 						// normal
+						if (statement != null) {
+							statement.close();
+						}
+						if (resultset != null) {
+							resultset.close();
+						}
 						return result;
 					} else {
+						if (statement != null) {
+							statement.close();
+						}
+						if (resultset != null) {
+							resultset.close();
+						}
 						// Multiple players were found, warn the sender
 						sender.sendMessage(ChatColor.RED + "Multiple returns for '" + input + "'");
 						return null;
@@ -303,7 +316,6 @@ public class emeraldmarket extends JavaPlugin {
 	}
 
 	public boolean forceAlias(CommandSender sender, String[] args) {
-		sender.sendMessage("Welcome, admin! HSAR is working on this.");
 		// checks if user has an alias already.
 		// if so, change it to the new one.
 		// if not, create one.
@@ -318,10 +330,10 @@ public class emeraldmarket extends JavaPlugin {
 			// if nothing, then it hasn't been used before.
 			if (resultset == null || !resultset.first()) {
 				statement.executeUpdate("INSERT INTO emeraldmarket_aliases (user, masteralias) "
-						+ "VALUES ('" + args[0] + "', '" + args[1] + "');");
+						+ "VALUES ('" + args[0] + "', '" + args[1].toUpperCase() + "');");
 				if (verbose) {
 					logger.info(sender.getName() + " forcibly added user '" + args[0]
-							+ "' to alias table under '" + args[0] + "'");
+							+ "' to alias table under '" + args[1].toUpperCase() + "'");
 				}
 				// close things down.
 				if (statement != null) {
@@ -333,11 +345,11 @@ public class emeraldmarket extends JavaPlugin {
 				return true;
 			} else {
 				// if the user is in the table already then UPDATE table.
-				statement.executeUpdate("UPDATE emeraldmarket_aliases SET masteralias = '" + args[1]
+				statement.executeUpdate("UPDATE emeraldmarket_aliases SET masteralias = '" + args[1].toUpperCase()
 						+ "' WHERE user = '" + args[0] + "';");
 				if (verbose) {
 					logger.info(sender.getName() + " forcibly changed user '" + args[0]
-							+ "' in alias table to '" + args[1] + "'");
+							+ "' in alias table to '" + args[1].toUpperCase() + "'");
 				}
 				if (statement != null) {
 					statement.close();
@@ -468,6 +480,7 @@ public class emeraldmarket extends JavaPlugin {
 			res.absolute(originalPlace);
 			return rowCount;
 		} catch (SQLException e) {
+			e.printStackTrace();
 		}
 		return -1;
 	}
