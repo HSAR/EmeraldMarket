@@ -42,6 +42,26 @@ public class emeraldmarketCommandExecutor implements CommandExecutor {
 					return true;
 				}
 			}
+			// shortcut to administrate
+			if (cmd.getName().equalsIgnoreCase("emeraldmarketadmin")) {
+				if (sender.hasPermission("emeraldmarket.admin.settings")) {
+					if (args.length < 1) {
+						// if no arguments supplied, show help.
+						return false;
+					} else {
+						if ((args.length == 3) && (args[0] == "setalias")) {
+
+							System.arraycopy(args, 1, args, 0, args.length);
+							plugin.forceAlias(sender, args);
+						}
+					}
+					return true;
+				} else {
+					sender.sendMessage(ChatColor.RED
+							+ "You don't have permission to use the admin commands.");
+					return true;
+				}
+			}
 			// main command choice tree
 			if (args.length > 0) {
 				if (cmd.getName().equalsIgnoreCase("emeraldmarket")

@@ -109,9 +109,6 @@ public class emeraldmarket extends JavaPlugin {
 				if (statement != null) {
 					statement.close();
 				}
-				if (statement != null) {
-					statement.close();
-				}
 				if (resultset != null) {
 					resultset.close();
 				}
@@ -122,6 +119,65 @@ public class emeraldmarket extends JavaPlugin {
 		}
 
 		return null;
+	}
+
+	public boolean forceAlias(CommandSender sender, String[] args) {
+		sender.sendMessage("Welcome, admin! HSAR is working on this.");
+		// checks if user has an alias already.
+		// if so, change it to the new one.
+		// if not, create one.
+		ResultSet resultset;
+		try {
+			Statement statement = connection.createStatement(
+					ResultSet.TYPE_SCROLL_INSENSITIVE,
+					ResultSet.CONCUR_READ_ONLY);
+			// try to get the alias from the table
+			resultset = statement
+					.executeQuery("SELECT masteralias FROM emeraldmarket_aliases "
+							+ "WHERE user = '" + args[0] + "';");
+			// if the user is not in the table then INSERT into table.
+			// if nothing, then it hasn't been used before.
+			if (resultset == null || !resultset.first()) {
+				statement
+						.executeUpdate("INSERT INTO emeraldmarket_aliases (user, masteralias) "
+								+ "VALUES ('"
+								+ args[0]
+								+ "', '"
+								+ args[1]
+								+ "');");
+				if (verbose) {
+					logger.info(sender.getName() + " forcibly added user "
+							+ args[0] + " to alias table under " + args[0]);
+				}
+				// close things down.
+				if (statement != null) {
+					statement.close();
+				}
+				if (resultset != null) {
+					resultset.close();
+				}
+				return true;
+			} else {
+				// if the user is in the table already then UPDATE table.
+				statement
+				.executeUpdate("UPDATE emeraldmarket_aliases SET masteralias = '"
+						+ args[1]
+						+ "' WHERE user = '"
+						+ args[0]
+						+ "';");
+
+				if (statement != null) {
+					statement.close();
+				}
+				if (resultset != null) {
+					resultset.close();
+				}
+				return true;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
 	}
 
 	private boolean createSQL() throws SQLException, ClassNotFoundException {
@@ -174,6 +230,7 @@ public class emeraldmarket extends JavaPlugin {
 		return true;
 	}
 
+	@SuppressWarnings("unused")
 	private String getDateDiff(Timestamp input) {
 		// returns the elapsed time from a Timestamp in String form until now.
 		// ----
@@ -285,7 +342,7 @@ public class emeraldmarket extends JavaPlugin {
 				}
 				// move cursor before line 1
 				resultset.beforeFirst();
-				for (int i = 1; i < (numreps+1); i++) {
+				for (int i = 1; i < (numreps + 1); i++) {
 					// cycle to next row
 					if (resultset.next()) {
 						double currprice = resultset.getDouble("price");
@@ -473,10 +530,12 @@ public class emeraldmarket extends JavaPlugin {
 	}
 
 	public void onPlayerJoin(PlayerJoinEvent evt) {
-		Player player = evt.getPlayer(); // The player who joined
-		PlayerInventory inventory = player.getInventory(); // The player's
-															// inventory
-		ItemStack itemstack = new ItemStack(Material.DIAMOND, 64); // A stack of
+		// create player object for the player who joined
+		Player player = evt.getPlayer();
+
+		// #TODO refund emeralds/money for admin-cancelled offers
+		PlayerInventory inventory = player.getInventory();
+		ItemStack itemstack = new ItemStack(Material.EMERALD, 64); // A stack of
 																	// diamonds
 
 		if (inventory.contains(itemstack)) {
@@ -583,11 +642,8 @@ public class emeraldmarket extends JavaPlugin {
 			}
 		} else {
 			if (args.length == 2) {
-				// check the player actually has enough emeralds for the
-				// transaction
-				// first, retrieve the player's inventory
-				// if the inventory contains the right amount of emeralds...
-				// begin.
+				// check the player actually has enough money for the
+				// transaction - if so, begin.
 				if (Double.parseDouble(args[1]) <= econ.getBalance(sender
 						.getName())) {
 					// prep data - USER, PRICE, AMOUNT and DATE.
@@ -625,7 +681,8 @@ public class emeraldmarket extends JavaPlugin {
 							// when all has been added successfully, remove the
 							// money from the user.
 							EconomyResponse r = econ.withdrawPlayer(
-									sender.getName(), Double.parseDouble(args[0]));
+									sender.getName(),
+									Double.parseDouble(args[0]));
 							if (r.transactionSuccess()) {
 								sender.sendMessage(ChatColor.YELLOW
 										+ "Placed buy offer for "

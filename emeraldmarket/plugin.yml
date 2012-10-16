@@ -23,7 +23,7 @@ commands:
       aliases: [ems]
    emeraldmarketadmin:
       description: EM - Admin settings
-      usage: /emeraldmarketadmin [NOT READY]
+      usage: /emeraldmarketadmin setalias [username] [alias]
       permission: emeraldmarket.admin.settings
       permission-message: You don't have permission to administrate the market.
       aliases: [ema]
