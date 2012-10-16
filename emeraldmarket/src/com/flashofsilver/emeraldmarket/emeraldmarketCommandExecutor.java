@@ -17,9 +17,7 @@ public class emeraldmarketCommandExecutor implements CommandExecutor {
 	}
 
 	@Override
-	public boolean onCommand(CommandSender sender, Command cmd, String label,
-			String[] args) {
-
+	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		// shortcut to administrate
 		if (cmd.getName().equalsIgnoreCase("emeraldmarketadmin")) {
 			if (sender.hasPermission("emeraldmarket.admin.settings")) {
@@ -28,17 +26,34 @@ public class emeraldmarketCommandExecutor implements CommandExecutor {
 					return false;
 				} else {
 					if ((args.length == 3) && (args[0].equals("setalias"))) {
-						sender.sendMessage("FISH");
-
-						System.arraycopy(args, 1, args, 0, args.length);
-						plugin.forceAlias(sender, args);
+						// pass the arguments (minus the command argument)
+						String[] clippedargs = new String[args.length - 1];
+						System.arraycopy(args, 1, clippedargs, 0, args.length - 1);
+						// partial name recognition
+						clippedargs[0] = plugin.matchPartialUser(sender, clippedargs[0]);
+						plugin.forceAlias(sender, clippedargs);
+						return true;
+					}
+					if ((args.length == 2) && (args[0].equals("getalias"))) {
+						// pass the arguments (minus the command argument)
+						// (this one is short because getalias has only one arg)
+						// partial name recognition
+						String aliasinput;
+						if (plugin.matchPartialUser(sender, args[1]) == null) {
+							// if there's a problem matching the user,
+							// terminate.
+							return true;
+						} else {
+							aliasinput = plugin.matchPartialUser(sender, args[1]);
+						}
+						String aliasresult = plugin.getAlias(sender, aliasinput);
+						sender.sendMessage("Alias of user '" + aliasinput + "' is '" + aliasresult + "'");
 						return true;
 					}
 				}
 				return false;
 			} else {
-				sender.sendMessage(ChatColor.RED
-						+ "You don't have permission to use the admin commands.");
+				sender.sendMessage(ChatColor.RED + "You don't have permission to use the admin commands.");
 				return true;
 			}
 		}
@@ -49,8 +64,7 @@ public class emeraldmarketCommandExecutor implements CommandExecutor {
 				plugin.buy(sender, args);
 				return true;
 			} else {
-				sender.sendMessage(ChatColor.RED
-						+ "You don't have permission to buy emeralds.");
+				sender.sendMessage(ChatColor.RED + "You don't have permission to buy emeralds.");
 				return true;
 			}
 		}
@@ -60,34 +74,33 @@ public class emeraldmarketCommandExecutor implements CommandExecutor {
 				plugin.sell(sender, args);
 				return true;
 			} else {
-				sender.sendMessage(ChatColor.RED
-						+ "You don't have permission to sell emeralds.");
+				sender.sendMessage(ChatColor.RED + "You don't have permission to sell emeralds.");
 				return true;
 			}
 		}
 		// main command choice tree
 		if (args.length > 0) {
-			if (cmd.getName().equalsIgnoreCase("emeraldmarket")
-					&& args[0].equals("buy")) {
+			if (cmd.getName().equalsIgnoreCase("emeraldmarket") && args[0].equals("buy")) {
 				if (sender.hasPermission("emeraldmarket.basic.buy")) {
-					System.arraycopy(args, 1, args, 0, args.length);
-					plugin.buy(sender, args);
+					// pass the arguments (minus the command argument)
+					String[] clippedargs = new String[args.length - 1];
+					System.arraycopy(args, 1, clippedargs, 0, args.length - 1);
+					plugin.buy(sender, clippedargs);
 					return true;
 				} else {
-					sender.sendMessage(ChatColor.RED
-							+ "You don't have permission to buy emeralds.");
+					sender.sendMessage(ChatColor.RED + "You don't have permission to buy emeralds.");
 					return true;
 				}
 			}
-			if (cmd.getName().equalsIgnoreCase("emeraldmarket")
-					&& args[0].equals("sell")) {
+			if (cmd.getName().equalsIgnoreCase("emeraldmarket") && args[0].equals("sell")) {
 				if (sender.hasPermission("emeraldmarket.basic.sell")) {
-					System.arraycopy(args, 1, args, 0, args.length);
-					plugin.sell(sender, args);
+					// pass the arguments (minus the command argument)
+					String[] clippedargs = new String[args.length - 1];
+					System.arraycopy(args, 1, clippedargs, 0, args.length - 1);
+					plugin.sell(sender, clippedargs);
 					return true;
 				} else {
-					sender.sendMessage(ChatColor.RED
-							+ "You don't have permission to sell emeralds.");
+					sender.sendMessage(ChatColor.RED + "You don't have permission to sell emeralds.");
 					return true;
 				}
 			}
