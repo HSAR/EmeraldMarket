@@ -118,7 +118,6 @@ public class emeraldmarket extends JavaPlugin {
 				return testalias;
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -286,22 +285,26 @@ public class emeraldmarket extends JavaPlugin {
 				}
 				// move cursor before line 1
 				resultset.beforeFirst();
-				for (int i = 0; i < numreps; i++) {
+				for (int i = 1; i < (numreps+1); i++) {
 					// cycle to next row
 					if (resultset.next()) {
 						double currprice = resultset.getDouble("price");
-						ResultSet rs = statement
-								.executeQuery("SELECT alias, date FROM emeraldmarket_buy "
+						Statement s = connection.createStatement(
+								ResultSet.TYPE_SCROLL_SENSITIVE,
+								ResultSet.CONCUR_READ_ONLY);
+						ResultSet amountRS = s
+								.executeQuery("SELECT COUNT(price) FROM emeraldmarket_buy "
 										+ "WHERE price = "
-										+ Double.toString(currprice)
-										+ " ORDER BY date ASC;");
-						rs.first(); // move to first row
-						sender.sendMessage(ChatColor.WHITE + " "
-								+ currency.format(currprice) + ChatColor.GRAY
-								+ " - " + ChatColor.DARK_GREEN
-								+ rs.getString("alias") + ChatColor.GRAY
-								+ " - " + ChatColor.WHITE
-								+ this.getDateDiff(rs.getTimestamp("date")));
+										+ Double.toString(currprice) + ";");
+						amountRS.first(); // move to first row
+						sender.sendMessage(ChatColor.GRAY + Integer.toString(i)
+								+ ". " + ChatColor.WHITE
+								+ currency.format(currprice) + " "
+								+ econ.currencyNamePlural() + ChatColor.GRAY
+								+ " (" + ChatColor.DARK_GREEN
+								+ amountRS.getString("COUNT(price)")
+								+ " in demand" + ChatColor.GRAY + ") ");
+						s.close();
 					}
 				}
 				sender.sendMessage(ChatColor.DARK_GREEN
@@ -362,7 +365,7 @@ public class emeraldmarket extends JavaPlugin {
 						amountRS.first(); // move to first row
 						sender.sendMessage(ChatColor.GRAY + Integer.toString(i)
 								+ ". " + ChatColor.WHITE
-								+ Double.toString(currprice) + " "
+								+ currency.format(currprice) + " "
 								+ econ.currencyNamePlural() + ChatColor.GRAY
 								+ " (" + ChatColor.DARK_GREEN
 								+ amountRS.getString("COUNT(price)")
@@ -425,10 +428,8 @@ public class emeraldmarket extends JavaPlugin {
 			connection = DriverManager.getConnection("jdbc:" + URL + "?user="
 					+ dbUser + "&password=" + dbPass);
 		} catch (SQLException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		} catch (ClassNotFoundException e2) {
-			// TODO Auto-generated catch block
 			e2.printStackTrace();
 		}
 		// first-run initialisation
@@ -440,10 +441,8 @@ public class emeraldmarket extends JavaPlugin {
 					logger.info("Tables created successfully.");
 				}
 			} catch (ClassNotFoundException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			this.getConfig().set("firstrun", false);
@@ -465,7 +464,6 @@ public class emeraldmarket extends JavaPlugin {
 			try {
 				connection.close();
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -590,8 +588,8 @@ public class emeraldmarket extends JavaPlugin {
 				// first, retrieve the player's inventory
 				// if the inventory contains the right amount of emeralds...
 				// begin.
-				if (Double.parseDouble(args[1]) <= econ.bankBalance(sender
-						.getName()).amount) {
+				if (Double.parseDouble(args[1]) <= econ.getBalance(sender
+						.getName())) {
 					// prep data - USER, PRICE, AMOUNT and DATE.
 					// Also retrieve or create ALIAS, a 4-letter alias.
 					String useralias = getAlias(sender);
@@ -605,29 +603,33 @@ public class emeraldmarket extends JavaPlugin {
 							Object datestamp = new java.sql.Timestamp(
 									date.getTime());
 							statement
-									.executeUpdate("INSERT INTO emeraldmarket_buy (user, price, amount, date) "
+									.executeUpdate("INSERT INTO emeraldmarket_buy (user, alias, price, amount, date) "
 											+ "VALUES ('"
 											+ sender.getName()
 											+ "', "
+											+ "(SELECT masteralias from emeraldmarket_aliases where user = '"
+											+ sender.getName()
+											+ "')"
+											+ ", "
 											+ args[0]
 											+ ", "
 											+ args[1]
-											+ ", '" + datestamp + "');");
+											+ ", '"
+											+ datestamp + "');");
 							if (statement != null) {
 								statement.close();
 							}
 						} catch (SQLException e) {
-							// TODO Auto-generated catch block
 							e.printStackTrace();
 						} finally {
 							// when all has been added successfully, remove the
 							// money from the user.
 							EconomyResponse r = econ.withdrawPlayer(
-									sender.getName(), 1.05);
+									sender.getName(), Double.parseDouble(args[0]));
 							if (r.transactionSuccess()) {
 								sender.sendMessage(ChatColor.YELLOW
 										+ "Placed buy offer for "
-										+ args[0]
+										+ args[1]
 										+ " emeralds "
 										+ " at "
 										+ currency.format(Double
