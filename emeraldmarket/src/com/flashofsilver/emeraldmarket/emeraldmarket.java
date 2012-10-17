@@ -405,6 +405,16 @@ public class emeraldmarket extends JavaPlugin {
 			logger.info(" SQL Exception: " + e);
 			return false;
 		}
+		try {
+			statement.executeUpdate("CREATE TABLE emeraldmarket_refunds ( " + "user   VARCHAR( 32 )    NOT NULL,"
+					+ "alias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
+					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, "
+					+ "price  DOUBLE( 64, 2 )  NOT NULL," + "amount INT( 5 )         NOT NULL,"
+					+ "date   DATETIME         NOT NULL, " + "PRIMARY KEY (user, date)" + ");");
+		} catch (SQLException e) {
+			logger.info(" SQL Exception: " + e);
+			return false;
+		}
 		return true;
 	}
 
