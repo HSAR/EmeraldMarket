@@ -345,8 +345,8 @@ public class emeraldmarket extends JavaPlugin {
 				return true;
 			} else {
 				// if the user is in the table already then UPDATE table.
-				statement.executeUpdate("UPDATE emeraldmarket_aliases SET masteralias = '" + args[1].toUpperCase()
-						+ "' WHERE user = '" + args[0] + "';");
+				statement.executeUpdate("UPDATE emeraldmarket_aliases SET masteralias = '"
+						+ args[1].toUpperCase() + "' WHERE user = '" + args[0] + "';");
 				if (verbose) {
 					logger.info(sender.getName() + " forcibly changed user '" + args[0]
 							+ "' in alias table to '" + args[1].toUpperCase() + "'");
@@ -385,36 +385,51 @@ public class emeraldmarket extends JavaPlugin {
 			return false;
 		}
 		try {
-			statement.executeUpdate("CREATE TABLE emeraldmarket_buy ( " + "user   VARCHAR( 32 )    NOT NULL,"
+			statement.executeUpdate("CREATE TABLE emeraldmarket_buy ( user VARCHAR( 32 ) NOT NULL,"
 					+ "alias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
 					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, "
-					+ "price  DOUBLE( 64, 2 )  NOT NULL," + "amount INT( 5 )         NOT NULL,"
-					+ "date   DATETIME         NOT NULL, " + "PRIMARY KEY (user, date)" + ");");
+					+ "price  DOUBLE( 64, 2 )  NOT NULL, amount INT( 5 ) NOT NULL,"
+					+ "date DATETIME NOT NULL, PRIMARY KEY (user, date) );");
 		} catch (SQLException e) {
 			logger.info(" SQL Exception: " + e);
 			return false;
 		}
 		try {
-			statement.executeUpdate("CREATE TABLE emeraldmarket_sell ( "
-					+ "user   VARCHAR( 32 )    NOT NULL,"
+			statement.executeUpdate("CREATE TABLE emeraldmarket_sell ( user VARCHAR( 32 ) NOT NULL,"
 					+ "alias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
 					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, "
-					+ "price  DOUBLE( 64, 2 )  NOT NULL," + "amount INT( 5 )         NOT NULL,"
-					+ "date   DATETIME         NOT NULL, " + "PRIMARY KEY (user, date)" + ");");
+					+ "price  DOUBLE( 64, 2 )  NOT NULL, amount INT( 5 ) NOT NULL,"
+					+ "date DATETIME NOT NULL, PRIMARY KEY (user, date) );");
 		} catch (SQLException e) {
 			logger.info(" SQL Exception: " + e);
 			return false;
 		}
 		try {
-			statement.executeUpdate("CREATE TABLE emeraldmarket_refunds ( " + "user   VARCHAR( 32 )    NOT NULL,"
+			statement.executeUpdate("CREATE TABLE emeraldmarket_refunds ( user VARCHAR( 32 ) NOT NULL,"
 					+ "alias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
 					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, "
-					+ "price  DOUBLE( 64, 2 )  NOT NULL," + "amount INT( 5 )         NOT NULL,"
-					+ "date   DATETIME         NOT NULL, " + "PRIMARY KEY (user, date)" + ");");
+					+ "price  DOUBLE( 64, 2 )  NOT NULL, amount INT( 5 ) NOT NULL,"
+					+ "date DATETIME NOT NULL, PRIMARY KEY (user, date) );");
 		} catch (SQLException e) {
 			logger.info(" SQL Exception: " + e);
 			return false;
 		}
+		try {
+			statement.executeUpdate("CREATE TABLE emeraldmarket_deals ( buyer VARCHAR( 32 ) NOT NULL,"
+					+ "buyalias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
+					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, "
+					+ "seller VARCHAR( 32 ) NOT NULL,"
+					+ "sellalias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
+					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, "
+					+ "price  DOUBLE( 64, 2 )  NOT NULL, amount INT( 5 ) NOT NULL,"
+					+ "date DATETIME PRIMARY KEY NOT NULL"
+					+ "buyernotified BIT NOT NULL DEFAULT ( 0 ), "
+					+ "sellernotified BIT NOT NULL DEFAULT ( 0 ) );");
+		} catch (SQLException e) {
+			logger.info(" SQL Exception: " + e);
+			return false;
+		}
+
 		return true;
 	}
 
