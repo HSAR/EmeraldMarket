@@ -14,13 +14,25 @@ commands:
       usage: /emeraldmarketbuy [price] [number]
       permission: emeraldmarket.basic.takeoffer
       permission-message: You don't have permission to buy emeralds.
-      aliases: [emb]
+      aliases: [emb]      
+   emeraldmarketbuyaccept:
+      description: EM - Buy emeralds by accepting a sell offer.
+      usage: /emeraldmarketbuy [price] [number]
+      permission: emeraldmarket.basic.takeoffer
+      permission-message: You don't have permission to buy emeralds via offers.
+      aliases: [emba]      
    emeraldmarketsell:
       description: EM - Sell emeralds from the open market
       usage: /emeraldmarketsell [price] [number]
       permission: emeraldmarket.basic.makeoffer
       permission-message: You don't have permission to sell emeralds.
-      aliases: [ems]
+      aliases: [ems]      
+   emeraldmarketsellaccept:
+      description: EM - Sell emeralds by accepting a buy offer.
+      usage: /emeraldmarketsellaccept [price] [number]
+      permission: emeraldmarket.basic.makeoffer
+      permission-message: You don't have permission to sell emeralds via offers.
+      aliases: [emsa]
    emeraldmarketadmin:
       description: EM - Admin settings
       usage: /emeraldmarketadmin setalias [username] [alias]
@@ -33,18 +45,40 @@ permissions:
         children:
             emeraldmarket.basic: true
             emeraldmarket.admin: true
+            
     emeraldmarket.basic.*:
         description: Allows you to buy and sell on the emerald market
         default: true
         children:
-            emeraldmarket.basic.makeoffer: true
-            emeraldmarket.basic.takeoffer: true
-    emeraldmarket.basic.makeoffer:
-        description: Allows you to make offers using this plugin (sell)
+            emeraldmarket.basic.buy: true
+            emeraldmarket.basic.sell: true
+            
+    emeraldmarket.basic.buy.*:
+        description: Allows you to make buy offers and take sell offers.
         default: true
-    emeraldmarket.basic.takeoffer:
-        description: Allows you to take offers using this plugin (buy)
+        children:
+            emeraldmarket.basic.buy.makebuyoffer: true
+            emeraldmarket.basic.buy.takeselloffer: true
+    emeraldmarket.basic.buy.makeoffer:
+        description: Allows you to make buy offers.
         default: true
+    emeraldmarket.basic.buy.takeselloffer:
+        description: Allows you to take sell offers.
+        default: true
+        
+    emeraldmarket.basic.sell.*:
+        description: Allows you to make sell offers and take buy offers.
+        default: true
+        children:
+            emeraldmarket.basic.sell.makeselloffer: true
+            emeraldmarket.basic.sell.takebuyoffer: true
+    emeraldmarket.basic.sell.makeselloffer:
+        description: Allows you to make sell offers.
+        default: true
+    emeraldmarket.basic.sell.takebuyoffer:
+        description: Allows you to take buy offers.
+        default: true    
+            
     emeraldmarket.admin.*:
         default: op
         description: Allows use of all admin commands
