@@ -368,14 +368,6 @@ public class emeraldmarket extends JavaPlugin {
 	private boolean createSQL() throws SQLException, ClassNotFoundException {
 		Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
 				ResultSet.CONCUR_READ_ONLY);
-		// select
-		/*
-		 * try { ResultSet res =
-		 * Stmt.executeQuery("CREATE DATABASE EmeraldMarket"); while
-		 * (res.next()) { logger.info("result:" + res.getString(0) + ","); } }
-		 * catch (SQLException e) { logger.info("[mdbc] SQL Exception: " + e); }
-		 */
-		// or update
 		try {
 			statement.executeUpdate("CREATE TABLE emeraldmarket_aliases ( "
 					+ "user  VARCHAR( 32 )  PRIMARY KEY NOT NULL UNIQUE, "
@@ -417,19 +409,16 @@ public class emeraldmarket extends JavaPlugin {
 		try {
 			statement.executeUpdate("CREATE TABLE emeraldmarket_deals ( buyer VARCHAR( 32 ) NOT NULL,"
 					+ "buyalias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
-					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, "
-					+ "seller VARCHAR( 32 ) NOT NULL,"
+					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, " + "seller VARCHAR( 32 ) NOT NULL,"
 					+ "sellalias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
 					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, "
 					+ "price  DOUBLE( 64, 2 )  NOT NULL, amount INT( 5 ) NOT NULL,"
-					+ "date DATETIME PRIMARY KEY NOT NULL"
-					+ "buyernotified BIT NOT NULL DEFAULT ( 0 ), "
+					+ "date DATETIME PRIMARY KEY NOT NULL" + "buyernotified BIT NOT NULL DEFAULT ( 0 ), "
 					+ "sellernotified BIT NOT NULL DEFAULT ( 0 ) );");
 		} catch (SQLException e) {
 			logger.info(" SQL Exception: " + e);
 			return false;
 		}
-
 		return true;
 	}
 
@@ -723,6 +712,16 @@ public class emeraldmarket extends JavaPlugin {
 			player.sendMessage("Welcome! You seem to be reeeally rich, so we gave you some more diamonds!");
 		}
 	}
+	
+	public void acceptsell(CommandSender sender, String[] args) {
+		// /emba RANK 
+		// #TODO allow users to accept sell offers (buying)
+	}
+		
+	public void acceptbuy(CommandSender sender, String[] args) {
+		// /emba RANK 
+		// #TODO allow users to accept buy offers (selling)
+	}
 
 	public void sell(CommandSender sender, String[] args) {
 		sender.sendMessage("Welcome, seller! HSAR is working on this.");
@@ -763,15 +762,14 @@ public class emeraldmarket extends JavaPlugin {
 									.executeUpdate("INSERT INTO emeraldmarket_sell (user, alias, price, amount, date) "
 											+ "VALUES ('"
 											+ sender.getName()
-											+ "', "
-											+ "(SELECT masteralias from emeraldmarket_aliases where user = '"
+											+ "', (SELECT masteralias from emeraldmarket_aliases where user = '"
 											+ sender.getName()
-											+ "')"
-											+ ", "
+											+ "'), "
 											+ args[0]
 											+ ", "
 											+ args[1]
-											+ ", '" + datestamp + "');");
+											+ ", '"
+											+ datestamp + "');");
 							if (statement != null) {
 								statement.close();
 							}
@@ -830,15 +828,14 @@ public class emeraldmarket extends JavaPlugin {
 									.executeUpdate("INSERT INTO emeraldmarket_buy (user, alias, price, amount, date) "
 											+ "VALUES ('"
 											+ sender.getName()
-											+ "', "
-											+ "(SELECT masteralias from emeraldmarket_aliases where user = '"
+											+ "', (SELECT masteralias from emeraldmarket_aliases where user = '"
 											+ sender.getName()
-											+ "')"
-											+ ", "
+											+ "'), "
 											+ args[0]
 											+ ", "
 											+ args[1]
-											+ ", '" + datestamp + "');");
+											+ ", '"
+											+ datestamp + "');");
 							if (statement != null) {
 								statement.close();
 							}
@@ -851,8 +848,8 @@ public class emeraldmarket extends JavaPlugin {
 									Double.parseDouble(args[0]));
 							if (r.transactionSuccess()) {
 								sender.sendMessage(ChatColor.YELLOW + "Placed buy offer for " + args[1]
-										+ " emeralds " + " at "
-										+ currency.format(Double.parseDouble(args[0])) + "/emerald.");
+										+ " emeralds at " + currency.format(Double.parseDouble(args[0]))
+										+ " " + econ.currencyNamePlural() + " per emerald.");
 
 							} else {
 								sender.sendMessage(String.format("An error occured: %s", r.errorMessage));
