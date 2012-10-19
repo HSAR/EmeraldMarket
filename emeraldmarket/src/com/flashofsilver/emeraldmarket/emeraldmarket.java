@@ -407,14 +407,14 @@ public class emeraldmarket extends JavaPlugin {
 			return false;
 		}
 		try {
-			statement.executeUpdate("CREATE TABLE emeraldmarket_deals ( buyer VARCHAR( 32 ) NOT NULL,"
+			statement.executeUpdate("CREATE TABLE emeraldmarket_deals ( buyer VARCHAR( 32 ) NOT NULL, "
 					+ "buyalias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
-					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, " + "seller VARCHAR( 32 ) NOT NULL,"
+					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, seller VARCHAR( 32 ) NOT NULL, "
 					+ "sellalias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
 					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, "
-					+ "price  DOUBLE( 64, 2 )  NOT NULL, amount INT( 5 ) NOT NULL,"
-					+ "date DATETIME PRIMARY KEY NOT NULL" + "buyernotified BIT NOT NULL DEFAULT ( 0 ), "
-					+ "sellernotified BIT NOT NULL DEFAULT ( 0 ) );");
+					+ "price  DOUBLE( 64, 2 )  NOT NULL, amount INT( 5 ) NOT NULL, "
+					+ "date DATETIME PRIMARY KEY NOT NULL, buyernotified BIT NOT NULL DEFAULT 0, "
+					+ "sellernotified BIT NOT NULL DEFAULT 0 );");
 		} catch (SQLException e) {
 			logger.info(" SQL Exception: " + e);
 			return false;
@@ -712,14 +712,14 @@ public class emeraldmarket extends JavaPlugin {
 			player.sendMessage("Welcome! You seem to be reeeally rich, so we gave you some more diamonds!");
 		}
 	}
-	
+
 	public void acceptsell(CommandSender sender, String[] args) {
-		// /emba RANK 
+		// /emba RANK AMOUNT
 		// #TODO allow users to accept sell offers (buying)
 	}
-		
+
 	public void acceptbuy(CommandSender sender, String[] args) {
-		// /emba RANK 
+		// /emba RANK AMOUNT
 		// #TODO allow users to accept buy offers (selling)
 	}
 

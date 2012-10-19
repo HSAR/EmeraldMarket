@@ -19,7 +19,7 @@ public class emeraldmarketCommandExecutor implements CommandExecutor {
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		// shortcut to administrate
 		if (cmd.getName().equalsIgnoreCase("emeraldmarketadmin")) {
-			if (sender.hasPermission("emeraldmarket.admin.settings")) {
+			if (sender.hasPermission("emeraldmarket.admin.settings")) { // Admin settings
 				if (args.length < 1) {
 					// if no arguments supplied, show help.
 					return false;
@@ -59,7 +59,7 @@ public class emeraldmarketCommandExecutor implements CommandExecutor {
 		// if (sender instanceof Player) {
 		// shortcut to buy
 		if (cmd.getName().equalsIgnoreCase("emeraldmarketbuy")) {
-			if (sender.hasPermission("emeraldmarket.basic.buy")) {
+			if (sender.hasPermission("emeraldmarket.basic.buy.makebuyoffer")) {
 				plugin.buy(sender, args);
 				return true;
 			} else {
@@ -69,7 +69,7 @@ public class emeraldmarketCommandExecutor implements CommandExecutor {
 		}
 		// shortcut to sell
 		if (cmd.getName().equalsIgnoreCase("emeraldmarketsell")) {
-			if (sender.hasPermission("emeraldmarket.basic.sell")) {
+			if (sender.hasPermission("emeraldmarket.basic.sell.makeselloffer")) {
 				plugin.sell(sender, args);
 				return true;
 			} else {
@@ -77,10 +77,31 @@ public class emeraldmarketCommandExecutor implements CommandExecutor {
 				return true;
 			}
 		}
+		// shortcut to buy (accept sell offers)
+		if (cmd.getName().equalsIgnoreCase("emeraldmarketbuy")) {
+			if (sender.hasPermission("emeraldmarket.basic.buy.makebuyoffer")) {
+				plugin.acceptsell(sender, args);
+				return true;
+			} else {
+				sender.sendMessage(ChatColor.RED + "You don't have permission to buy emeralds.");
+				return true;
+			}
+		}
+		// shortcut to sell (accept buy offers)
+		if (cmd.getName().equalsIgnoreCase("emeraldmarketsell")) {
+			if (sender.hasPermission("emeraldmarket.basic.sell.makeselloffer")) {
+				plugin.acceptbuy(sender, args);
+				return true;
+			} else {
+				sender.sendMessage(ChatColor.RED + "You don't have permission to sell emeralds.");
+				return true;
+			}
+		}
+		
 		// main command choice tree
 		if (args.length > 0) {
-			if (cmd.getName().equalsIgnoreCase("emeraldmarket") && args[0].equals("buy")) {
-				if (sender.hasPermission("emeraldmarket.basic.buy")) {
+			if (cmd.getName().equalsIgnoreCase("emeraldmarket") && args[0].equals("buyoffer")) {
+				if (sender.hasPermission("emeraldmarket.basic.buy.makebuyoffer")) {
 					// pass the arguments (minus the command argument)
 					String[] clippedargs = new String[args.length - 1];
 					System.arraycopy(args, 1, clippedargs, 0, args.length - 1);
@@ -91,12 +112,36 @@ public class emeraldmarketCommandExecutor implements CommandExecutor {
 					return true;
 				}
 			}
-			if (cmd.getName().equalsIgnoreCase("emeraldmarket") && args[0].equals("sell")) {
-				if (sender.hasPermission("emeraldmarket.basic.sell")) {
+			if (cmd.getName().equalsIgnoreCase("emeraldmarket") && args[0].equals("selloffer")) {
+				if (sender.hasPermission("emeraldmarket.basic.sell.makeselloffer")) {
 					// pass the arguments (minus the command argument)
 					String[] clippedargs = new String[args.length - 1];
 					System.arraycopy(args, 1, clippedargs, 0, args.length - 1);
 					plugin.sell(sender, clippedargs);
+					return true;
+				} else {
+					sender.sendMessage(ChatColor.RED + "You don't have permission to sell emeralds.");
+					return true;
+				}
+			}
+			if (cmd.getName().equalsIgnoreCase("emeraldmarket") && args[0].equals("buyaccept")) {
+				if (sender.hasPermission("emeraldmarket.basic.buy.takeselloffer")) {
+					// pass the arguments (minus the command argument)
+					String[] clippedargs = new String[args.length - 1];
+					System.arraycopy(args, 1, clippedargs, 0, args.length - 1);
+					plugin.acceptsell(sender, clippedargs);
+					return true;
+				} else {
+					sender.sendMessage(ChatColor.RED + "You don't have permission to buy emeralds.");
+					return true;
+				}
+			}
+			if (cmd.getName().equalsIgnoreCase("emeraldmarket") && args[0].equals("sellaccept")) {
+				if (sender.hasPermission("emeraldmarket.basic.sell.takebuyoffer")) {
+					// pass the arguments (minus the command argument)
+					String[] clippedargs = new String[args.length - 1];
+					System.arraycopy(args, 1, clippedargs, 0, args.length - 1);
+					plugin.acceptbuy(sender, clippedargs);
 					return true;
 				} else {
 					sender.sendMessage(ChatColor.RED + "You don't have permission to sell emeralds.");
