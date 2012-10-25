@@ -399,23 +399,22 @@ public class emeraldmarket extends JavaPlugin {
 		try {
 			statement.executeUpdate("CREATE TABLE emeraldmarket_refunds ( user VARCHAR( 32 ) NOT NULL,"
 					+ "alias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
-					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, "
-					+ "price  DOUBLE( 64, 2 )  NOT NULL, amount INT( 5 ) NOT NULL,"
-					+ "date DATETIME NOT NULL, PRIMARY KEY (user, date) );");
+					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, money  DOUBLE( 64, 2 )  "
+					+ "NOT NULL, emeralds INT( 5 ) NOT NULL, date DATETIME NOT NULL, "
+					+ "datecomplete DATETIME DEFAULT NULL, PRIMARY KEY (user, date) );");
 		} catch (SQLException e) {
 			logger.info(" SQL Exception: " + e);
 			return false;
 		}
 		try {
-			statement
-					.executeUpdate("CREATE TABLE emeraldmarket_deals ( buyer VARCHAR( 32 ) NOT NULL, "
-							+ "buyalias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
-							+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, seller VARCHAR( 32 ) NOT NULL, "
-							+ "sellalias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
-							+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, "
-							+ "price  DOUBLE( 64, 2 )  NOT NULL, amount INT( 5 ) NOT NULL, "
-							+ "date DATETIME PRIMARY KEY NOT NULL, datecomplete DATETIME DEFAULT NULL, buyernotified BIT NOT NULL DEFAULT 0, "
-							+ "sellernotified BIT NOT NULL DEFAULT 0 );");
+			statement.executeUpdate("CREATE TABLE emeraldmarket_deals ( buyer VARCHAR( 32 ) NOT NULL, "
+					+ "buyalias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
+					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, seller VARCHAR( 32 ) NOT NULL, "
+					+ "sellalias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
+					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, price  DOUBLE( 64, 2 )  NOT NULL, "
+					+ "amount INT( 5 ) NOT NULL, date DATETIME PRIMARY KEY NOT NULL, "
+					+ "datecomplete DATETIME DEFAULT NULL, buyernotified BIT NOT NULL DEFAULT 0, "
+					+ "sellernotified BIT NOT NULL DEFAULT 0 );");
 		} catch (SQLException e) {
 			logger.info(" SQL Exception: " + e);
 			return false;
@@ -701,6 +700,34 @@ public class emeraldmarket extends JavaPlugin {
 	public void onPlayerJoin(PlayerJoinEvent evt) {
 		// create player object for the player who joined
 		Player player = evt.getPlayer();
+		// query SQL tables for accepted deals and refunds regarding this player
+		// refunds first
+		try {
+			ResultSet resultset;
+			Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
+					ResultSet.CONCUR_READ_ONLY);
+			resultset = statement.executeQuery("SELECT * FROM emeraldmarket_refunds WHERE user = '"
+					+ player.getDisplayName() + "';");
+			if (resultset != null) {
+				// if there is something, execute the refund.
+				// #DEVNOTE assumed only emeralds or money are refunded during
+				// any one transaction.
+				int emeralds = resultset.getInt("emeralds");
+				double money = resultset.getDouble("money");
+				if ((emeralds > 0) && (money == 0)) {
+					player.sendMessage(ChatColor.DARK_GREEN + "You have been refunded " + ChatColor.WHITE
+							+ emeralds + " emeralds " + ChatColor.DARK_GREEN + "by an admin.");
+				}
+				if ((emeralds == 0) && (money > 0)) {
+					player.sendMessage(ChatColor.DARK_GREEN + "You have been refunded " + ChatColor.WHITE
+							+ emeralds + " " + econ.currencyNamePlural() + " " + ChatColor.DARK_GREEN
+							+ "by an admin.");
+				}
+
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 
 		// #TODO refund emeralds/money for admin-cancelled offers
 		PlayerInventory inventory = player.getInventory();
