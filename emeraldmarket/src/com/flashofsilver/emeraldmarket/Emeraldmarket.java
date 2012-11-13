@@ -22,11 +22,14 @@ import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
 public class Emeraldmarket extends JavaPlugin {
+	// enum declaration
+	public enum OfferType {
+		BUY, SELL
+	}
 
 	// Important plugin objects
 	public Logger logger;
@@ -486,7 +489,7 @@ public class Emeraldmarket extends JavaPlugin {
 					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, seller VARCHAR( 32 ) NOT NULL, "
 					+ "sellalias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
 					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, price  DOUBLE( 64, 2 )  NOT NULL, "
-					+ "amount INT( 5 ) NOT NULL, date DATETIME PRIMARY KEY NOT NULL, "
+					+ "amount INT( 5 ) NOT NULL, datecompleted DATETIME PRIMARY KEY NOT NULL, "
 					+ "datelisted DATETIME DEFAULT NULL, datecomplete DATETIME DEFAULT NULL, "
 					+ "buyernotified BIT NOT NULL DEFAULT 0, sellernotified BIT NOT NULL DEFAULT 0 );");
 		} catch (SQLException e) {
@@ -573,7 +576,7 @@ public class Emeraldmarket extends JavaPlugin {
 		return -1;
 	}
 
-	private boolean runSpecificBuyOffer(CommandSender sender, Double price, int amountToBuy) {
+	private boolean runBuyOffer(CommandSender sender, Double price, int amountToBuy) {
 		// returns true if offer was accepted successfully, false otherwise.
 		// this method TAKES A BUY OFFER (sells emeralds)
 		//
@@ -638,6 +641,7 @@ public class Emeraldmarket extends JavaPlugin {
 							// complete event can handle giving money or
 							// emeralds to both the buyer and the seller
 						} catch (SQLException e) {
+							sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
 							logger.info(" SQL Exception: " + e);
 							return false;
 						}
@@ -660,9 +664,15 @@ public class Emeraldmarket extends JavaPlugin {
 												+ currency.format(price) + "' AND user = '"
 												+ offerRS.getString("user") + "';");
 							} catch (SQLException e) {
+								sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
 								logger.info(" SQL Exception: " + e);
 								return false;
 							}
+							// if the offer completes, call an event
+							OfferAcceptedEvent OAevent = new OfferAcceptedEvent(OfferType.BUY,
+									offerRS.getString("user"), sender.getName(), price, currentBuy);
+							// Call the event
+							Bukkit.getServer().getPluginManager().callEvent(OAevent);
 						} else {
 							// just check that the amount to modify by is not
 							// negative, because that would be bad
@@ -677,6 +687,7 @@ public class Emeraldmarket extends JavaPlugin {
 											+ currency.format(price) + "' AND user = '"
 											+ offerRS.getString("user") + "';");
 								} catch (SQLException e) {
+									sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
 									logger.info(" SQL Exception: " + e);
 									return false;
 								}
@@ -695,14 +706,17 @@ public class Emeraldmarket extends JavaPlugin {
 								+ econ.currencyNamePlural() + ChatColor.GRAY + "/emerald");
 
 					} else {
-						// if we can't step into the resultset, something's
-						// wrong
+						// if we can't step into offerRS, something's wrong
 						sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
 						return false;
 					}
 				}
-				statementOffers.close();
-				return true;
+				// it never hurts to double check
+				if (amountRemaining == 0) {
+					// close statement object, return true
+					statementOffers.close();
+					return true;
+				}
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -717,7 +731,7 @@ public class Emeraldmarket extends JavaPlugin {
 		}
 	}
 
-	private boolean runSpecificSellOffer(CommandSender sender, Double price, int amountToSell) {
+	private boolean runSellOffer(CommandSender sender, Double price, int amountToSell) {
 		// returns true if offer was accepted successfully, false otherwise.
 		// this method TAKES A SELL OFFER (buy emeralds)
 		//
@@ -732,10 +746,9 @@ public class Emeraldmarket extends JavaPlugin {
 			Statement statementOffers = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
 					ResultSet.CONCUR_READ_ONLY);
 			// query for buy listings
-			offerRS = statementOffers
-					.executeQuery("SELECT user, alias, price, amount "
-							+ "FROM emeraldmarket_sell WHERE price = '" + currency.format(price)
-							+ "' ORDER BY date;");
+			offerRS = statementOffers.executeQuery("SELECT user, alias, price, amount "
+					+ "FROM emeraldmarket_sell" + " WHERE price = '" + currency.format(price)
+					+ "' ORDER BY date;");
 			if ((offerRS == null) || (!offerRS.first())) {
 				// if nothing, something has gone wrong.
 				sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
@@ -784,6 +797,7 @@ public class Emeraldmarket extends JavaPlugin {
 							// complete event can handle giving money or
 							// emeralds to both the buyer and the seller
 						} catch (SQLException e) {
+							sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
 							logger.info(" SQL Exception: " + e);
 							return false;
 						}
@@ -806,9 +820,15 @@ public class Emeraldmarket extends JavaPlugin {
 												+ currency.format(price) + "' AND user = '"
 												+ offerRS.getString("user") + "';");
 							} catch (SQLException e) {
+								sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
 								logger.info(" SQL Exception: " + e);
 								return false;
 							}
+							// if the offer completes, call an event
+							OfferAcceptedEvent OAevent = new OfferAcceptedEvent(OfferType.BUY,
+									offerRS.getString("user"), sender.getName(), price, currentSell);
+							// Call the event
+							Bukkit.getServer().getPluginManager().callEvent(OAevent);
 						} else {
 							// just check that the amount to modify by is not
 							// negative, because that would be bad
@@ -823,6 +843,7 @@ public class Emeraldmarket extends JavaPlugin {
 											+ currency.format(price) + "' AND user = '"
 											+ offerRS.getString("user") + "';");
 								} catch (SQLException e) {
+									sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
 									logger.info(" SQL Exception: " + e);
 									return false;
 								}
@@ -840,14 +861,17 @@ public class Emeraldmarket extends JavaPlugin {
 								+ offerRS.getString("alias") + " at " + currency.format(price) + " "
 								+ econ.currencyNamePlural() + ChatColor.GRAY + "/emerald");
 					} else {
-						// if we can't step into the resultset, something's
-						// wrong
+						// if we can't step into offerRS, something's wrong
 						sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
 						return false;
 					}
 				}
-				statementOffers.close();
-				return true;
+				// it never hurts to double check
+				if (amountRemaining == 0) {
+					// close statement object, return true
+					statementOffers.close();
+					return true;
+				}
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -990,7 +1014,8 @@ public class Emeraldmarket extends JavaPlugin {
 		logger = getLogger();
 		// get the server object
 		server = Bukkit.getServer();
-		//
+		// register events
+		getServer().getPluginManager().registerEvents(new EmeraldmarketEventListener(), this);
 		// save config to default location if not already there
 		this.saveDefaultConfig();
 		// verbose logging? retrieve value from config file.
@@ -1004,7 +1029,9 @@ public class Emeraldmarket extends JavaPlugin {
 		EmeraldmarketCommandExecutor EmeraldmarketCommandExecutor = new EmeraldmarketCommandExecutor(this);
 		getCommand("emeraldmarket").setExecutor(EmeraldmarketCommandExecutor);
 		getCommand("emeraldmarketbuy").setExecutor(EmeraldmarketCommandExecutor);
+		getCommand("emeraldmarketbuyaccept").setExecutor(EmeraldmarketCommandExecutor);
 		getCommand("emeraldmarketsell").setExecutor(EmeraldmarketCommandExecutor);
+		getCommand("emeraldmarketsellaccept").setExecutor(EmeraldmarketCommandExecutor);
 		getCommand("emeraldmarketadmin").setExecutor(EmeraldmarketCommandExecutor);
 		// retrieve SQL variables from config
 		URL = this.getConfig().getString("URL");
@@ -1060,137 +1087,17 @@ public class Emeraldmarket extends JavaPlugin {
 		}
 	}
 
-	public void onPlayerJoin(PlayerJoinEvent evt) {
-		// create player object for the player who joined
-		Player player = evt.getPlayer();
-		// query SQL tables for accepted deals and refunds regarding this player
-		// #TODO refund emeralds/money for admin-cancelled offers
-		try {
-			// refunds first
-			ResultSet resultset;
-			Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
-					ResultSet.CONCUR_READ_ONLY);
-			resultset = statement.executeQuery("SELECT * FROM emeraldmarket_refunds WHERE user = '"
-					+ player.getDisplayName() + "';");
-			if (resultset != null) {
-				// if there is something, execute the refund.
-				// move pointer before the first line ready for cycling through.
-				resultset.beforeFirst();
-				while (resultset.next()) {
-					// #DEVNOTE assumed only emeralds or money are refunded
-					// during any one transaction.
-					int emeralds = resultset.getInt("emeralds");
-					double money = resultset.getDouble("money");
-					if ((emeralds > 0) && (money == 0)) {
-						// open the player's inventory
-						PlayerInventory inventory = player.getInventory();
-						// initialise the itemstack object
-						ItemStack emstack = new ItemStack(Material.EMERALD, emeralds);
-						inventory.addItem(emstack);
-						player.sendMessage(ChatColor.DARK_GREEN + "You have been refunded " + ChatColor.WHITE
-								+ emeralds + " emeralds " + ChatColor.DARK_GREEN + "by an admin.");
-					}
-					if ((emeralds == 0) && (money > 0)) {
-						// add the money.
-						econ.depositPlayer(player.getName(), money);
-						player.sendMessage(ChatColor.DARK_GREEN + "You have been refunded " + ChatColor.WHITE
-								+ currency.format(money) + " " + ChatColor.DARK_GREEN
-								+ econ.currencyNamePlural() + " by an admin.");
-					}
-				}
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-
-		try {
-			// deals next
-			// completed BUY offers first
-			ResultSet resultset;
-			Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
-					ResultSet.CONCUR_READ_ONLY);
-			resultset = statement.executeQuery("SELECT * FROM emeraldmarket_deals WHERE buyer = '"
-					+ player.getDisplayName() + "';");
-			if (resultset != null) {
-				// if there is something, complete the buy.
-				// move pointer before the first line ready for cycling through.
-				resultset.beforeFirst();
-				while (resultset.next()) {
-					int credit = resultset.getInt("amount");
-					if (credit > 0) {
-						// open the player's inventory
-						PlayerInventory inventory = player.getInventory();
-						// initialise the itemstack object
-						ItemStack emstack = new ItemStack(Material.EMERALD, credit);
-						inventory.addItem(emstack);
-						player.sendMessage(ChatColor.DARK_GREEN + "You have bought " + ChatColor.WHITE
-								+ credit + " emeralds " + ChatColor.DARK_GREEN + "from "
-								+ resultset.getString("sellalias") + " at " + ChatColor.WHITE
-								+ resultset.getDouble("price") + " per emerald.");
-						// summarise
-						// #TODO Gather together all buys summarise.
-						player.sendMessage(ChatColor.DARK_GREEN + "You have received " + ChatColor.WHITE
-								+ credit + ChatColor.DARK_GREEN + " emeralds.");
-					}
-				}
-			}
-			// clear resultset for next round.
-			if (resultset != null) {
-				resultset.close();
-			}
-			// completed SELL offers next
-			resultset = statement.executeQuery("SELECT * FROM emeraldmarket_deals WHERE seller = '"
-					+ player.getDisplayName() + "';");
-			if (resultset != null) {
-				// if there is something, complete the sell.
-				// move pointer before the first line ready for cycling through.
-				resultset.beforeFirst();
-				while (resultset.next()) {
-					// money earned = number of emeralds sold * price per
-					// emerald
-					double credit = (resultset.getInt("amount") * resultset.getDouble("price"));
-					if (credit > 0) {
-						// add the money.
-						econ.depositPlayer(player.getName(), credit);
-						player.sendMessage(ChatColor.DARK_GREEN + "You have sold " + ChatColor.WHITE + credit
-								+ " emeralds " + ChatColor.DARK_GREEN + "to "
-								+ resultset.getString("sellalias") + " at " + ChatColor.WHITE
-								+ resultset.getDouble("price") + " per emerald.");
-						// sumarise.
-						// #TODO Gather together all sells and use summary for
-						// totals.
-						player.sendMessage(ChatColor.DARK_GREEN + "You have earned " + ChatColor.WHITE
-								+ credit + ChatColor.DARK_GREEN + econ.currencyNamePlural());
-					}
-				}
-			}
-
-		} catch (SQLException e) {
-			e.printStackTrace();
-		}
-
-		// #XXX Test this works in-game.
-		PlayerInventory inventory = player.getInventory();
-		ItemStack itemstack = new ItemStack(Material.EMERALD, 64); // A stack of
-																	// emeralds
-
-		if (inventory.contains(itemstack)) {
-			inventory.addItem(itemstack); // Adds a stack of emeralds to the
-											// player's inventory
-			player.sendMessage("Welcome! You seem to be reeeally rich, so we gave you some more emeralds!");
-		}
-	}
-
 	public void acceptsell(CommandSender sender, String[] args) {
 		// /emba PRICE AMOUNT
 		// #TODO allow users to accept sell offers (buying)
-		runSpecificBuyOffer(sender, Double.parseDouble(args[0]), Integer.parseInt(args[1]));
+		if (runBuyOffer(sender, Double.parseDouble(args[0]), Integer.parseInt(args[1]))) {
+		}
 	}
 
 	public void acceptbuy(CommandSender sender, String[] args) {
 		// /emba RANK AMOUNT
 		// #TODO allow users to accept buy offers (selling)
-		runSpecificSellOffer(sender, Double.parseDouble(args[0]), Integer.parseInt(args[1]));
+		runSellOffer(sender, Double.parseDouble(args[0]), Integer.parseInt(args[1]));
 	}
 
 	public void sell(CommandSender sender, String[] args) {
@@ -1323,4 +1230,150 @@ public class Emeraldmarket extends JavaPlugin {
 		}
 
 	}
+
+	public void notify(Player player) {
+		// this method runs a check on the database to see if there are any
+		// outstanding deals in the database that need to be credited
+		// #TODO refund emeralds/money for admin-cancelled offers
+		try {
+			// refunds first
+			ResultSet resultset;
+			// query SQL table for accepted deals and refunds regarding this
+			// player
+			Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
+					ResultSet.CONCUR_READ_ONLY);
+			resultset = statement.executeQuery("SELECT * FROM emeraldmarket_refunds WHERE user = '"
+					+ player.getDisplayName() + "';");
+			if (resultset != null) {
+				// if there is something, execute the refund.
+				// move pointer before the first line ready for cycling through.
+				resultset.beforeFirst();
+				while (resultset.next()) {
+					// #DEVNOTE assumed only emeralds or money are refunded
+					// during any one transaction.
+					int emeralds = resultset.getInt("emeralds");
+					double money = resultset.getDouble("money");
+					if ((emeralds > 0) && (money == 0)) {
+						// open the player's inventory
+						PlayerInventory inventory = player.getInventory();
+						// initialise the itemstack object
+						ItemStack emstack = new ItemStack(Material.EMERALD, emeralds);
+						inventory.addItem(emstack);
+						player.sendMessage(ChatColor.DARK_GREEN + "You have been refunded " + ChatColor.WHITE
+								+ emeralds + " emeralds " + ChatColor.DARK_GREEN + "by an admin.");
+					}
+					if ((emeralds == 0) && (money > 0)) {
+						// add the money.
+						econ.depositPlayer(player.getName(), money);
+						player.sendMessage(ChatColor.DARK_GREEN + "You have been refunded " + ChatColor.WHITE
+								+ currency.format(money) + " " + ChatColor.DARK_GREEN
+								+ econ.currencyNamePlural() + " by an admin.");
+					}
+				}
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		// deals next
+		try {
+			// completed BUY offers first
+			Statement statementDeals = connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
+					ResultSet.CONCUR_READ_ONLY);
+			ResultSet resultset = statementDeals
+					.executeQuery("SELECT * FROM emeraldmarket_deals WHERE buyer = '"
+							+ player.getDisplayName() + "' AND buyernotified = 0;");
+			// variable to store the total emeralds gained
+			int totalMoneyGained = 0;
+			// variable to store the total money gained
+			double totalEmeraldsGained = 0d;
+			if (resultset != null) {
+				// if there is something, complete the buy.
+				// move pointer before the first line ready for cycling through.
+				resultset.beforeFirst();
+				while (resultset.next()) {
+					int credit = resultset.getInt("amount");
+					if (credit > 0) {
+						// increment total
+						totalEmeraldsGained = totalEmeraldsGained + credit;
+						// open the player's inventory
+						PlayerInventory inventory = player.getInventory();
+						// initialise the itemstack object
+						ItemStack emStack = new ItemStack(Material.EMERALD, credit);
+						inventory.addItem(emStack);
+						player.sendMessage(ChatColor.DARK_GREEN + "You have bought " + ChatColor.WHITE
+								+ credit + " emeralds " + ChatColor.DARK_GREEN + "from "
+								+ resultset.getString("sellalias") + " at " + ChatColor.WHITE
+								+ resultset.getDouble("price") + " per emerald.");
+						// set sellernotified to true now that we're done
+						Statement statementDealsClosed = connection.createStatement(
+								ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+						statementDealsClosed
+								.executeUpdate("UPDATE emeraldmarket_deals SET sellernotified = 1 "
+										+ "WHERE seller = '" + player.getDisplayName()
+										+ "' AND dateaccepted = '" + resultset.getString("dateaccepted")
+										+ "';");
+					}
+				}
+				// summarise
+				// #TODO Gather together all buys summarise.
+				player.sendMessage(ChatColor.DARK_GREEN + "You have received " + ChatColor.WHITE
+						+ totalEmeraldsGained + ChatColor.DARK_GREEN + " emeralds in total.");
+			}
+			// clear resultset for next round.
+			if (resultset != null) {
+				resultset.close();
+			}
+			// completed SELL offers next
+			resultset = statementDeals.executeQuery("SELECT * FROM emeraldmarket_deals WHERE seller = '"
+					+ player.getDisplayName() + "' AND sellernotified = 0;");
+			if (resultset != null) {
+				// if there is something, complete the sell.
+				// move pointer before the first line ready for cycling through.
+				resultset.beforeFirst();
+				while (resultset.next()) {
+					// money earned = emeralds sold * price per emerald
+					double credit = (resultset.getInt("amount") * resultset.getDouble("price"));
+					if (credit > 0) {
+						// increment total
+						totalEmeraldsGained = totalEmeraldsGained + credit;
+						// add the money.
+						econ.depositPlayer(player.getName(), credit);
+						player.sendMessage(ChatColor.DARK_GREEN + "You have sold " + ChatColor.WHITE + credit
+								+ " emeralds " + ChatColor.DARK_GREEN + "to "
+								+ resultset.getString("sellalias") + " at " + ChatColor.WHITE
+								+ resultset.getDouble("price") + " per emerald.");
+						// set sellernotified to true now that we're done
+						Statement statementDealsClosed = connection.createStatement(
+								ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+						statementDealsClosed
+								.executeUpdate("UPDATE emeraldmarket_deals SET sellernotified = 1 "
+										+ "WHERE seller = '" + player.getDisplayName()
+										+ "' AND dateaccepted = '" + resultset.getString("dateaccepted")
+										+ "';");
+					}
+				}
+				// summarise.
+				player.sendMessage(ChatColor.DARK_GREEN + "You have earned " + ChatColor.WHITE
+						+ totalMoneyGained + ChatColor.DARK_GREEN + econ.currencyNamePlural() + " in total.");
+				// close statement
+				statementDeals.close();
+			}
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		// #XXX Test this works in-game.
+		PlayerInventory inventory = player.getInventory();
+		ItemStack itemstack = new ItemStack(Material.EMERALD, 64); // A stack of
+																	// emeralds
+
+		if (inventory.contains(itemstack)) {
+			inventory.addItem(itemstack); // Adds a stack of emeralds to the
+											// player's inventory
+			player.sendMessage("Welcome! You seem to be reeeally rich, so we gave you some more emeralds!");
+		}
+	}
+
 }

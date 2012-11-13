@@ -3,10 +3,10 @@ package com.flashofsilver.emeraldmarket;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-import com.flashofsilver.emeraldmarket.Emeraldmarket.TransactionType;
+import com.flashofsilver.emeraldmarket.Emeraldmarket.OfferType;
 
 public class OfferAcceptedEvent extends Event {
-	private final TransactionType type;
+	private final OfferType type;
 	private final String firstParty;
 	private final String secondParty;
 	private final double price;
@@ -14,7 +14,7 @@ public class OfferAcceptedEvent extends Event {
 
 	private static final HandlerList handlers = new HandlerList();
 
-	public OfferAcceptedEvent(TransactionType type, String firstParty, String secondParty, double price, int amount) {
+	public OfferAcceptedEvent(OfferType type, String firstParty, String secondParty, double price, int amount) {
 		this.type = type;
 		this.firstParty = firstParty;
 		this.secondParty = secondParty;
@@ -22,7 +22,7 @@ public class OfferAcceptedEvent extends Event {
 		this.amount = amount;
 	}
 
-    public TransactionType getTransactionType() {
+    public OfferType getTransactionType() {
         return type;
     }
 
