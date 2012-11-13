@@ -5,13 +5,13 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
-public class emeraldmarketCommandExecutor implements CommandExecutor {
+public class EmeraldmarketCommandExecutor implements CommandExecutor {
 
-	private emeraldmarket plugin; // pointer to your main class, unrequired if
-									// you don't need methods from the main
-									// class
+	// pointer back to the main class
+	private Emeraldmarket plugin;
 
-	public emeraldmarketCommandExecutor(emeraldmarket plugin) {
+	// constructor
+	public EmeraldmarketCommandExecutor(Emeraldmarket plugin) {
 		this.plugin = plugin;
 	}
 
@@ -19,7 +19,8 @@ public class emeraldmarketCommandExecutor implements CommandExecutor {
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		// shortcut to administrate
 		if (cmd.getName().equalsIgnoreCase("emeraldmarketadmin")) {
-			if (sender.hasPermission("emeraldmarket.admin.settings")) { // Admin settings
+			if (sender.hasPermission("emeraldmarket.admin.settings")) { // Admin
+																		// settings
 				if (args.length < 1) {
 					// if no arguments supplied, show help.
 					return false;
@@ -78,7 +79,7 @@ public class emeraldmarketCommandExecutor implements CommandExecutor {
 			}
 		}
 		// shortcut to buy (accept sell offers)
-		if (cmd.getName().equalsIgnoreCase("emeraldmarketbuy")) {
+		if (cmd.getName().equalsIgnoreCase("emeraldmarketbuyaccept")) {
 			if (sender.hasPermission("emeraldmarket.basic.buy.makebuyoffer")) {
 				plugin.acceptsell(sender, args);
 				return true;
@@ -88,7 +89,7 @@ public class emeraldmarketCommandExecutor implements CommandExecutor {
 			}
 		}
 		// shortcut to sell (accept buy offers)
-		if (cmd.getName().equalsIgnoreCase("emeraldmarketsell")) {
+		if (cmd.getName().equalsIgnoreCase("emeraldmarketsellaccept")) {
 			if (sender.hasPermission("emeraldmarket.basic.sell.makeselloffer")) {
 				plugin.acceptbuy(sender, args);
 				return true;
@@ -97,7 +98,7 @@ public class emeraldmarketCommandExecutor implements CommandExecutor {
 				return true;
 			}
 		}
-		
+
 		// main command choice tree
 		if (args.length > 0) {
 			if (cmd.getName().equalsIgnoreCase("emeraldmarket") && args[0].equals("buyoffer")) {

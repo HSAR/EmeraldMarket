@@ -26,7 +26,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
-public class emeraldmarket extends JavaPlugin {
+public class Emeraldmarket extends JavaPlugin {
 
 	// Important plugin objects
 	public Logger logger;
@@ -37,7 +37,7 @@ public class emeraldmarket extends JavaPlugin {
 	private String URL;
 	private String dbUser;
 	private String dbPass;
-	// currency format
+	// currency format DON'T TOUCH THIS
 	DecimalFormat currency = new DecimalFormat("#.##");
 	Server server;
 
@@ -170,14 +170,83 @@ public class emeraldmarket extends JavaPlugin {
 		}
 	}
 
-	public String getAlias(CommandSender sender) {
-		// checks if user has an alias already - if not, autocreates one.
+	public String getAlias(String input) {
+		// THIS VERSION CANNOT NOTIFY IF GENERATION FAILED - USE WITH CAUTION
 		ResultSet resultset;
 		String testalias = "";
 		try {
-
 			Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
 					ResultSet.CONCUR_READ_ONLY);
+			// checks if user has an alias already - if not, autocreates one.
+			// try to get the alias from the table
+			resultset = statement.executeQuery("SELECT masteralias FROM emeraldmarket_aliases "
+					+ "WHERE user = '" + input + "';");
+			// if not set then use the uppercased first 4 letters of their name
+			if (resultset == null || !resultset.first()) {
+				if (verbose) {
+					logger.info("Alias for user '" + input + "' not found. Generating...");
+				}
+				testalias = input.substring(0, 4).toUpperCase();
+				// check whether the alias has been used before...
+				resultset = statement.executeQuery("SELECT user FROM emeraldmarket_aliases "
+						+ "WHERE masteralias = '" + testalias + "';");
+				// if nothing, then it hasn't been used before.
+				if (resultset == null || !resultset.first()) {
+					statement.executeUpdate("INSERT INTO emeraldmarket_aliases (user, masteralias) "
+							+ "VALUES ('" + input + "', '" + testalias + "');");
+					if (verbose) {
+						logger.info("Added user '" + input + "' to alias table under '" + testalias + "'");
+					}
+					// close things down.
+					if (statement != null) {
+						statement.close();
+					}
+					if (resultset != null) {
+						resultset.close();
+					}
+					return testalias;
+				} else {
+					// if generation fails then then only thing that can be done
+					// is return null
+					//
+					// You'll need to add them manually using the admin
+					// commands.
+					//
+					// close things down.
+					if (statement != null) {
+						statement.close();
+					}
+					if (resultset != null) {
+						resultset.close();
+					}
+					return null;
+				}
+			} else {
+				// if the query returns an alias, return that.
+				testalias = resultset.getString("masteralias");
+
+				if (statement != null) {
+					statement.close();
+				}
+				if (resultset != null) {
+					resultset.close();
+				}
+				return testalias;
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+		return null;
+	}
+
+	public String getAlias(CommandSender sender) {
+		ResultSet resultset;
+		String testalias = "";
+		try {
+			Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+					ResultSet.CONCUR_READ_ONLY);
+			// checks if user has an alias already - if not, autocreates one.
 			// try to get the alias from the table
 			resultset = statement.executeQuery("SELECT masteralias FROM emeraldmarket_aliases "
 					+ "WHERE user = '" + sender.getName() + "';");
@@ -244,13 +313,14 @@ public class emeraldmarket extends JavaPlugin {
 	}
 
 	public String getAlias(CommandSender admin, String input) {
-		// checks if user has an alias already - if not, autocreates one.
+		// This is the admin version, for one user autogenerating another user's
+		// THIS IS NOT THE VERSION FOR FORCE SETTING ALIASES
 		ResultSet resultset;
 		String testalias = "";
 		try {
-
 			Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
 					ResultSet.CONCUR_READ_ONLY);
+			// checks if user has an alias already - if not, autocreates one.
 			// try to get the alias from the table
 			resultset = statement.executeQuery("SELECT masteralias FROM emeraldmarket_aliases "
 					+ "WHERE user = '" + input + "';");
@@ -369,16 +439,16 @@ public class emeraldmarket extends JavaPlugin {
 		Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
 				ResultSet.CONCUR_READ_ONLY);
 		try {
-			statement.executeUpdate("DROP emeraldmarket_aliases IF EXISTS emeraldmarket_aliases"
-					+ "CREATE TABLE emeraldmarket_aliases ( user  VARCHAR( 32 )" + ""
+			statement.executeUpdate("DROP emeraldmarket_aliases IF EXISTS emeraldmarket_aliases;");
+			statement.executeUpdate("CREATE TABLE emeraldmarket_aliases ( user  VARCHAR( 32 )" + ""
 					+ "  PRIMARY KEY NOT NULL UNIQUE, masteralias VARCHAR( 4 )   UNIQUE);");
 		} catch (SQLException e) {
 			logger.info(" SQL Exception: " + e);
 			return false;
 		}
 		try {
-			statement.executeUpdate("DROP emeraldmarket_buy IF EXISTS emeraldmarket_buy"
-					+ "CREATE TABLE emeraldmarket_buy ( user VARCHAR( 32 ) NOT NULL,"
+			statement.executeUpdate("DROP emeraldmarket_buy IF EXISTS emeraldmarket_buy;");
+			statement.executeUpdate("CREATE TABLE emeraldmarket_buy ( user VARCHAR( 32 ) NOT NULL,"
 					+ "alias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
 					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, "
 					+ "price  DOUBLE( 64, 2 )  NOT NULL, amount INT( 5 ) NOT NULL,"
@@ -388,8 +458,8 @@ public class emeraldmarket extends JavaPlugin {
 			return false;
 		}
 		try {
-			statement.executeUpdate("DROP emeraldmarket_sell IF EXISTS emeraldmarket_sell"
-					+ "CREATE TABLE emeraldmarket_sell ( user VARCHAR( 32 ) NOT NULL,"
+			statement.executeUpdate("DROP emeraldmarket_sell IF EXISTS emeraldmarket_sell;");
+			statement.executeUpdate("CREATE TABLE emeraldmarket_sell ( user VARCHAR( 32 ) NOT NULL,"
 					+ "alias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
 					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, "
 					+ "price  DOUBLE( 64, 2 )  NOT NULL, amount INT( 5 ) NOT NULL,"
@@ -399,8 +469,8 @@ public class emeraldmarket extends JavaPlugin {
 			return false;
 		}
 		try {
-			statement.executeUpdate("DROP emeraldmarket_refunds IF EXISTS emeraldmarket_refunds"
-					+ "CREATE TABLE emeraldmarket_refunds ( user VARCHAR( 32 ) NOT NULL,"
+			statement.executeUpdate("DROP emeraldmarket_refunds IF EXISTS emeraldmarket_refunds;");
+			statement.executeUpdate("CREATE TABLE emeraldmarket_refunds ( user VARCHAR( 32 ) NOT NULL,"
 					+ "alias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
 					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, money  DOUBLE( 64, 2 )  "
 					+ "NOT NULL, emeralds INT( 5 ) NOT NULL, date DATETIME NOT NULL, "
@@ -410,15 +480,15 @@ public class emeraldmarket extends JavaPlugin {
 			return false;
 		}
 		try {
-			statement.executeUpdate("DROP emeraldmarket_deals IF EXISTS emeraldmarket_deals"
-					+ "CREATE TABLE emeraldmarket_deals ( buyer VARCHAR( 32 ) NOT NULL, "
+			statement.executeUpdate("DROP emeraldmarket_deals IF EXISTS emeraldmarket_deals;");
+			statement.executeUpdate("CREATE TABLE emeraldmarket_deals ( buyer VARCHAR( 32 ) NOT NULL, "
 					+ "buyalias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
 					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, seller VARCHAR( 32 ) NOT NULL, "
 					+ "sellalias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
 					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, price  DOUBLE( 64, 2 )  NOT NULL, "
 					+ "amount INT( 5 ) NOT NULL, date DATETIME PRIMARY KEY NOT NULL, "
-					+ "datecomplete DATETIME DEFAULT NULL, buyernotified BIT NOT NULL DEFAULT 0, "
-					+ "sellernotified BIT NOT NULL DEFAULT 0 );");
+					+ "datelisted DATETIME DEFAULT NULL, datecomplete DATETIME DEFAULT NULL, "
+					+ "buyernotified BIT NOT NULL DEFAULT 0, sellernotified BIT NOT NULL DEFAULT 0 );");
 		} catch (SQLException e) {
 			logger.info(" SQL Exception: " + e);
 			return false;
@@ -503,116 +573,292 @@ public class emeraldmarket extends JavaPlugin {
 		return -1;
 	}
 
-	private boolean runSpecificBuyOffer(CommandSender sender, int rank, int amount) {
-		// returns true if offer was accepted succefully, false otherwise.
-		// #TODO Get this to return a specific buy offer.
-		ResultSet resultset;
+	private boolean runSpecificBuyOffer(CommandSender sender, Double price, int amountToBuy) {
+		// returns true if offer was accepted successfully, false otherwise.
+		// this method TAKES A BUY OFFER (sells emeralds)
+		//
+		// database resultset object declaration
+		ResultSet offerRS;
+		// amountremaining continues over into the next offer(s) in
+		// the event that a single offer cannot satisfy buyer demand
+		Integer amountRemaining = amountToBuy;
+		// ^ this is declared here so that we can check at the end to see if it
+		// has been initialised
 		try {
-			Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+			Statement statementOffers = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
 					ResultSet.CONCUR_READ_ONLY);
 			// query for buy listings
-			resultset = statement.executeQuery("SELECT DISTINCT price FROM emeraldmarket_buy "
-					+ "ORDER BY price ASC;");
-			if (resultset == null || !resultset.first()) {
-				// if none, tell the user so.
+			offerRS = statementOffers.executeQuery("SELECT user, alias, price, amount "
+					+ "FROM emeraldmarket_buy WHERE price = '" + currency.format(price) + "' ORDER BY date;");
+			if ((offerRS == null) || (!offerRS.first())) {
+				// if nothing, something has gone wrong.
 				sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
 				return false;
 			} else {
-				// continue querying to find the offer at the "top of the pile"
-				// defined by "oldest offer" for that particular price point.
-				// write the header, then write the rest as they come in.
-				sender.sendMessage(ChatColor.DARK_GREEN + "========= " + ChatColor.WHITE + "OFFERS TO BUY"
-						+ ChatColor.DARK_GREEN + " =========");
-				// try to reach the ranked offer that the user has requested
-				if (rank <= getResultSetNumRows(resultset)) {
-					resultset.absolute(rank);
-				} else {
-					// if the resultset has less seperate offers than the
-					// request
-					// make errors appear everywhere.
-					sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
-					return false;
-				}
-				// move cursor before line 1
-				resultset.beforeFirst();
-				for (int i = 1; i < (numreps + 1); i++) {
-					// cycle to next row
-					if (resultset.next()) {
-						double currprice = resultset.getDouble("price");
-						Statement s = connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
-								ResultSet.CONCUR_READ_ONLY);
-						ResultSet amountRS = s.executeQuery("SELECT COUNT(price) FROM emeraldmarket_buy "
-								+ "WHERE price = " + Double.toString(currprice) + ";");
-						amountRS.first(); // move to first row
-						sender.sendMessage(ChatColor.GRAY + Integer.toString(i) + ". " + ChatColor.WHITE
-								+ currency.format(currprice) + " " + econ.currencyNamePlural()
-								+ ChatColor.GRAY + " (" + ChatColor.DARK_GREEN
-								+ amountRS.getString("COUNT(price)") + " in demand" + ChatColor.GRAY + ") ");
-						s.close();
+				// we are only interested in the topmost offer at this point -
+				// the oldest offer
+				offerRS.beforeFirst(); // move cursor before first so we can
+										// step into it
+				// transactionsmade tracks the number of offers accepted
+				int transactionsMade = 0;
+				// retrieve the date so that we can stamp all relevant DB
+				// entries - done out-of-loop to avoid unnecessary load
+				java.util.Date date = new Date();
+				Object datestamp = new java.sql.Timestamp(date.getTime());
+				// while the amount the user has requested has not been
+				// satisfied, continue buying.
+				while (amountRemaining > 0) {
+					if (offerRS.next()) {
+						// currentBuy stores the current demand (for this
+						// amountRS row)
+						int currentBuy;
+						// currentBuy is equal to the lowest integer value
+						// out of remaining demand and available supply
+						if (amountRemaining > offerRS.getInt("amount")) {
+							currentBuy = offerRS.getInt("amount");
+						} else {
+							currentBuy = amountRemaining;
+						}
+						// In order to process the offer we start by
+						// inserting the a row to emeraldmarket_deals so the
+						// database can track the progress of the deal
+						try {
+							Statement statement = connection.createStatement(
+									ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+							statement.executeUpdate("INSERT INTO emeraldmarket_deals (buyer, buyalias, "
+									+ "seller, sellalias, price, amount, datelisted, datecompleted, "
+									+ "buyernotified, sellernotified) VALUES ('" + sender.getName() + "', '"
+									+ getAlias(sender) + "', '" + offerRS.getString("user") + "', '"
+									+ getAlias(offerRS.getString("user")) + "', '" + price + "', '"
+									+ currentBuy + "', '" + offerRS.getString("date") + "', '" + datestamp
+									+ "', 0, 0);");
+							// note that both buyernotified and
+							// sellernotifed are both set to FALSE - this is
+							// so that a single method called by the deal
+							// complete event can handle giving money or
+							// emeralds to both the buyer and the seller
+						} catch (SQLException e) {
+							logger.info(" SQL Exception: " + e);
+							return false;
+						}
+						// #TODO create an event DEALCOMPLETED that triggers
+						// a "notify seller" and "notify buyer" method
+						// (search of emeraldmarket_deals for unresolved
+						// deals)
+
+						// Remove/update the row from emeraldmarket_buy
+						// REMOVE if we have completely accepted it
+						// (if demand >= the offer)
+						// UPDATE if we haven't finished the offer (if
+						// demand was less than the offer)
+						Statement statementUpdates = connection.createStatement(
+								ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+						if (currentBuy == offerRS.getInt("amount")) {
+							try {
+								statementUpdates
+										.executeUpdate("DELETE FROM emeraldmarket_buy WHERE price = '"
+												+ currency.format(price) + "' AND user = '"
+												+ offerRS.getString("user") + "';");
+							} catch (SQLException e) {
+								logger.info(" SQL Exception: " + e);
+								return false;
+							}
+						} else {
+							// just check that the amount to modify by is not
+							// negative, because that would be bad
+							if ((offerRS.getInt("amount") - currentBuy) <= 0) {
+								// if it is, something has gone wrong.
+								sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
+								return false;
+							} else {
+								try {
+									statementUpdates.executeUpdate("UPDATE emeraldmarket_buy SET amount = '"
+											+ (offerRS.getInt("amount") - currentBuy) + "' WHERE price = '"
+											+ currency.format(price) + "' AND user = '"
+											+ offerRS.getString("user") + "';");
+								} catch (SQLException e) {
+									logger.info(" SQL Exception: " + e);
+									return false;
+								}
+							}
+						}
+						// after use, close the statement
+						statementUpdates.close();
+
+						// change amountremaining and transactionsmade
+						amountRemaining = amountRemaining - currentBuy;
+						transactionsMade = transactionsMade + 1;
+
+						sender.sendMessage(ChatColor.GRAY + Integer.toString(transactionsMade) + ". "
+								+ ChatColor.WHITE + "SOLD " + currentBuy + " emeralds to "
+								+ offerRS.getString("alias") + " at " + currency.format(price) + " "
+								+ econ.currencyNamePlural() + ChatColor.GRAY + "/emerald");
+
+					} else {
+						// if we can't step into the resultset, something's
+						// wrong
+						sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
+						return false;
 					}
 				}
-				sender.sendMessage(ChatColor.DARK_GREEN + "=================================");
+				statementOffers.close();
+				return true;
 			}
-
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
+		if ((amountRemaining == 0) || (amountRemaining == null)) {
+			return true;
+		} else {
+			// if we have run to this point and not returned true (and
+			// amountRemaining is 0 or null) then something is wrong
+			sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
+			return false;
+		}
 	}
 
-	private void getSpecificSellOffer(CommandSender sender, int input) {
-		// #TODO Get this to return a specific sell offer
-		ResultSet resultset;
+	private boolean runSpecificSellOffer(CommandSender sender, Double price, int amountToSell) {
+		// returns true if offer was accepted successfully, false otherwise.
+		// this method TAKES A SELL OFFER (buy emeralds)
+		//
+		// database resultset object declaration
+		ResultSet offerRS;
+		// amountremaining continues over into the next offer(s) in
+		// the event that a single offer cannot satisfy buyer demand
+		Integer amountRemaining = amountToSell;
+		// ^ this is declared here so that we can check at the end to see if it
+		// has been initialised
 		try {
-			Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
+			Statement statementOffers = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
 					ResultSet.CONCUR_READ_ONLY);
 			// query for buy listings
-			resultset = statement.executeQuery("SELECT DISTINCT price FROM emeraldmarket_sell "
-					+ "ORDER BY price;");
-			if (resultset == null || !resultset.first()) {
-				// if none, tell the user so.
-				sender.sendMessage(ChatColor.DARK_GREEN + "========= " + ChatColor.WHITE + "OFFERS TO SELL"
-						+ ChatColor.DARK_GREEN + " =========");
-				sender.sendMessage(ChatColor.WHITE + "None found.");
-				sender.sendMessage(ChatColor.DARK_GREEN + "=================================");
+			offerRS = statementOffers
+					.executeQuery("SELECT user, alias, price, amount "
+							+ "FROM emeraldmarket_sell WHERE price = '" + currency.format(price)
+							+ "' ORDER BY date;");
+			if ((offerRS == null) || (!offerRS.first())) {
+				// if nothing, something has gone wrong.
+				sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
+				return false;
 			} else {
-				// continue querying to find the offer at the "top of the pile"
-				// defined by "oldest offer" for that particular price point.
-				// write the header, then write the rest as they come in.
-				sender.sendMessage(ChatColor.DARK_GREEN + "======== " + ChatColor.WHITE + "EMERALDS FOR SALE"
-						+ ChatColor.DARK_GREEN + " ========");
-				// find the number of repeats to do
-				// 5 (arbitrary low number)
-				// or the number of rows in the result set, whichever is lower.
-				int numreps;
-				if (getResultSetNumRows(resultset) < 5) {
-					numreps = getResultSetNumRows(resultset);
-				} else {
-					// else, roll on until "input" and stop there, wherever that
-					// ends up being.
-					numreps = input;
-				}
-				resultset.beforeFirst();
-				for (int i = 1; i < (numreps + 1); i++) {
-					// cycle to next row
-					if (resultset.next()) {
-						double currprice = resultset.getDouble("price");
-						Statement s = connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
-								ResultSet.CONCUR_READ_ONLY);
-						ResultSet amountRS = s.executeQuery("SELECT COUNT(price) FROM emeraldmarket_sell "
-								+ "WHERE price = " + Double.toString(currprice) + ";");
-						amountRS.first(); // move to first row
-						sender.sendMessage(ChatColor.GRAY + Integer.toString(i) + ". " + ChatColor.WHITE
-								+ currency.format(currprice) + " " + econ.currencyNamePlural()
-								+ ChatColor.GRAY + " (" + ChatColor.DARK_GREEN
-								+ amountRS.getString("COUNT(price)") + " on offer" + ChatColor.GRAY + ") ");
-						s.close();
+				// we are only interested in the topmost offer at this point -
+				// the oldest offer
+				offerRS.beforeFirst(); // move cursor before first so we can
+										// step into it
+				// transactionsmade tracks the number of offers accepted
+				int transactionsMade = 0;
+				// retrieve the date so that we can stamp all relevant DB
+				// entries - done out-of-loop to avoid unnecessary load
+				java.util.Date date = new Date();
+				Object datestamp = new java.sql.Timestamp(date.getTime());
+				// while the amount the user has requested has not been
+				// satisfied, continue buying.
+				while (amountRemaining > 0) {
+					if (offerRS.next()) {
+						// currentBuy stores the current demand (for this
+						// amountRS row)
+						int currentSell;
+						// currentBuy is equal to the lowest integer value
+						// out of remaining demand and available supply
+						if (amountRemaining > offerRS.getInt("amount")) {
+							currentSell = offerRS.getInt("amount");
+						} else {
+							currentSell = amountRemaining;
+						}
+						// In order to process the offer we start by
+						// inserting the a row to emeraldmarket_deals so the
+						// database can track the progress of the deal
+						try {
+							Statement statement = connection.createStatement(
+									ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+							statement.executeUpdate("INSERT INTO emeraldmarket_deals (buyer, buyalias, "
+									+ "seller, sellalias, price, amount, datelisted, datecompleted, "
+									+ "buyernotified, sellernotified) VALUES ('" + offerRS.getString("user")
+									+ "', '" + getAlias(offerRS.getString("user")) + "', '"
+									+ sender.getName() + "', '" + getAlias(sender) + "', '" + price + "', '"
+									+ currentSell + "', '" + offerRS.getString("date") + "', '" + datestamp
+									+ "', 0, 0);");
+							// note that both buyernotified and
+							// sellernotifed are both set to FALSE - this is
+							// so that a single method called by the deal
+							// complete event can handle giving money or
+							// emeralds to both the buyer and the seller
+						} catch (SQLException e) {
+							logger.info(" SQL Exception: " + e);
+							return false;
+						}
+						// #TODO create an event DEALCOMPLETED that triggers
+						// a "notify seller" and "notify buyer" method
+						// (search of emeraldmarket_deals for unresolved
+						// deals)
+
+						// Remove/update the row from emeraldmarket_buy
+						// REMOVE if we have completely accepted it
+						// (if demand >= the offer)
+						// UPDATE if we haven't finished the offer (if
+						// demand was less than the offer)
+						Statement statementUpdates = connection.createStatement(
+								ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+						if (currentSell == offerRS.getInt("amount")) {
+							try {
+								statementUpdates
+										.executeUpdate("DELETE FROM emeraldmarket_sell WHERE price = '"
+												+ currency.format(price) + "' AND user = '"
+												+ offerRS.getString("user") + "';");
+							} catch (SQLException e) {
+								logger.info(" SQL Exception: " + e);
+								return false;
+							}
+						} else {
+							// just check that the amount to modify by is not
+							// negative, because that would be bad
+							if ((offerRS.getInt("amount") - currentSell) <= 0) {
+								// if it is, something has gone wrong.
+								sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
+								return false;
+							} else {
+								try {
+									statementUpdates.executeUpdate("UPDATE emeraldmarket_buy SET amount = '"
+											+ (offerRS.getInt("amount") - currentSell) + "' WHERE price = '"
+											+ currency.format(price) + "' AND user = '"
+											+ offerRS.getString("user") + "';");
+								} catch (SQLException e) {
+									logger.info(" SQL Exception: " + e);
+									return false;
+								}
+							}
+						}
+						// after use, close the statement
+						statementUpdates.close();
+
+						// change amountremaining and transactionsmade
+						amountRemaining = amountRemaining - currentSell;
+						transactionsMade = transactionsMade + 1;
+
+						sender.sendMessage(ChatColor.GRAY + Integer.toString(transactionsMade) + ". "
+								+ ChatColor.WHITE + "BOUGHT " + currentSell + " emeralds from "
+								+ offerRS.getString("alias") + " at " + currency.format(price) + " "
+								+ econ.currencyNamePlural() + ChatColor.GRAY + "/emerald");
+					} else {
+						// if we can't step into the resultset, something's
+						// wrong
+						sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
+						return false;
 					}
 				}
-				sender.sendMessage(ChatColor.DARK_GREEN + "=================================");
+				statementOffers.close();
+				return true;
 			}
-
 		} catch (SQLException e) {
 			e.printStackTrace();
+		}
+		if ((amountRemaining == 0) || (amountRemaining == null)) {
+			return true;
+		} else {
+			// if we have run to this point and not returned true (and
+			// amountRemaining is 0 or null) then something is wrong
+			sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
+			return false;
 		}
 	}
 
@@ -755,11 +1001,11 @@ public class emeraldmarket extends JavaPlugin {
 			logger.info("Verbose logging disabled.");
 		}
 		// enable command executor
-		emeraldmarketCommandExecutor emeraldmarketCommandExecutor = new emeraldmarketCommandExecutor(this);
-		getCommand("emeraldmarket").setExecutor(emeraldmarketCommandExecutor);
-		getCommand("emeraldmarketbuy").setExecutor(emeraldmarketCommandExecutor);
-		getCommand("emeraldmarketsell").setExecutor(emeraldmarketCommandExecutor);
-		getCommand("emeraldmarketadmin").setExecutor(emeraldmarketCommandExecutor);
+		EmeraldmarketCommandExecutor EmeraldmarketCommandExecutor = new EmeraldmarketCommandExecutor(this);
+		getCommand("emeraldmarket").setExecutor(EmeraldmarketCommandExecutor);
+		getCommand("emeraldmarketbuy").setExecutor(EmeraldmarketCommandExecutor);
+		getCommand("emeraldmarketsell").setExecutor(EmeraldmarketCommandExecutor);
+		getCommand("emeraldmarketadmin").setExecutor(EmeraldmarketCommandExecutor);
 		// retrieve SQL variables from config
 		URL = this.getConfig().getString("URL");
 		dbUser = this.getConfig().getString("Username");
@@ -936,13 +1182,15 @@ public class emeraldmarket extends JavaPlugin {
 	}
 
 	public void acceptsell(CommandSender sender, String[] args) {
-		// /emba RANK AMOUNT
+		// /emba PRICE AMOUNT
 		// #TODO allow users to accept sell offers (buying)
+		runSpecificBuyOffer(sender, Double.parseDouble(args[0]), Integer.parseInt(args[1]));
 	}
 
 	public void acceptbuy(CommandSender sender, String[] args) {
 		// /emba RANK AMOUNT
 		// #TODO allow users to accept buy offers (selling)
+		runSpecificSellOffer(sender, Double.parseDouble(args[0]), Integer.parseInt(args[1]));
 	}
 
 	public void sell(CommandSender sender, String[] args) {
