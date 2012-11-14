@@ -40,4 +40,8 @@ public class OfferRefundedEvent extends Event {
 		return handlers;
 	}
 
+    public static HandlerList getHandlerList() {
+        return handlers;
+    }
+
 }

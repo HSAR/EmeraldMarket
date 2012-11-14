@@ -1,5 +1,5 @@
 name: EmeraldMarket
-main: com.flashofsilver.emeraldmarket.emeraldmarket
+main: com.flashofsilver.emeraldmarket.Emeraldmarket
 version: 0.2
 depend: [Vault]
 commands:
