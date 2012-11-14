@@ -5,13 +5,13 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
-public class EmeraldmarketCommandExecutor implements CommandExecutor {
+public class EmeraldMarketCommandExecutor implements CommandExecutor {
 
 	// pointer back to the main class
-	private Emeraldmarket plugin;
+	private EmeraldMarket plugin;
 
 	// constructor
-	public EmeraldmarketCommandExecutor(Emeraldmarket plugin) {
+	public EmeraldMarketCommandExecutor(EmeraldMarket plugin) {
 		this.plugin = plugin;
 	}
 

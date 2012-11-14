@@ -14,6 +14,8 @@ import java.util.logging.Logger;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.economy.EconomyResponse;
 
+import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.Bukkit;
@@ -25,14 +27,18 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
-public class Emeraldmarket extends JavaPlugin {
+public class EmeraldMarket extends JavaPlugin {
 	// enum declaration
 	public enum OfferType {
 		BUY, SELL
 	}
 
 	// Important plugin objects
-	public Logger logger;
+    private static Server server;
+    private static Logger logger;
+    private static PluginManager pluginManager;
+    private static EmeraldMarket plugin;
+    private static PluginDescriptionFile description;
 	public static Economy econ = null;
 	//
 	public boolean verbose;
@@ -42,10 +48,27 @@ public class Emeraldmarket extends JavaPlugin {
 	private String dbPass;
 	// currency format DON'T TOUCH THIS
 	DecimalFormat currency = new DecimalFormat("#.##");
-	Server server;
 
 	private Connection connection;
+	
+	// Getters
+	
+	public static Logger getBukkitLogger() {
+        return logger;
+    }
 
+    public static Server getBukkitServer() {
+        return server;
+    }
+
+    public static String getVersion() {
+        return description.getVersion();
+    }
+
+    public static String getPluginName() {
+        return description.getName();
+    }
+	
 	public String matchPartialUser(CommandSender sender, String input) {
 		List<Player> list = server.matchPlayer(input);
 		if (list.size() == 1) {
@@ -979,12 +1002,17 @@ public class Emeraldmarket extends JavaPlugin {
 
 	@Override
 	public void onEnable() {
+		// static reference to this plugin
+        plugin = this;
 		// start the logger
+        logger = getLogger();
+        pluginManager = getServer().getPluginManager();
+        description = getDescription();
+        server = getServer();
 		logger = getLogger();
-		// get the server object
-		server = Bukkit.getServer();
+		
 		// register events
-		getServer().getPluginManager().registerEvents(new EmeraldmarketEventListener(this), this);
+		getServer().getPluginManager().registerEvents(new EmeraldMarketEventListener(this), this);
 		// save config to default location if not already there
 		this.saveDefaultConfig();
 		// verbose logging? retrieve value from config file.
@@ -995,13 +1023,13 @@ public class Emeraldmarket extends JavaPlugin {
 			logger.info("Verbose logging disabled.");
 		}
 		// enable command executor
-		EmeraldmarketCommandExecutor EmeraldmarketCommandExecutor = new EmeraldmarketCommandExecutor(this);
-		getCommand("emeraldmarket").setExecutor(EmeraldmarketCommandExecutor);
-		getCommand("emeraldmarketbuy").setExecutor(EmeraldmarketCommandExecutor);
-		getCommand("emeraldmarketbuyaccept").setExecutor(EmeraldmarketCommandExecutor);
-		getCommand("emeraldmarketsell").setExecutor(EmeraldmarketCommandExecutor);
-		getCommand("emeraldmarketsellaccept").setExecutor(EmeraldmarketCommandExecutor);
-		getCommand("emeraldmarketadmin").setExecutor(EmeraldmarketCommandExecutor);
+		EmeraldMarketCommandExecutor EmeraldMarketCommandExecutor = new EmeraldMarketCommandExecutor(this);
+		getCommand("emeraldmarket").setExecutor(EmeraldMarketCommandExecutor);
+		getCommand("emeraldmarketbuy").setExecutor(EmeraldMarketCommandExecutor);
+		getCommand("emeraldmarketbuyaccept").setExecutor(EmeraldMarketCommandExecutor);
+		getCommand("emeraldmarketsell").setExecutor(EmeraldMarketCommandExecutor);
+		getCommand("emeraldmarketsellaccept").setExecutor(EmeraldMarketCommandExecutor);
+		getCommand("emeraldmarketadmin").setExecutor(EmeraldMarketCommandExecutor);
 		// retrieve SQL variables from config
 		URL = this.getConfig().getString("URL");
 		dbUser = this.getConfig().getString("Username");

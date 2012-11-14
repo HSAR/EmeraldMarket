@@ -11,13 +11,13 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 
-public class EmeraldmarketEventListener implements Listener {
+public class EmeraldMarketEventListener implements Listener {
 
 	// pointer back to the main class
-	private Emeraldmarket plugin;
+	private EmeraldMarket plugin;
 
 	// constructor
-	public EmeraldmarketEventListener(Emeraldmarket plugin) {
+	public EmeraldMarketEventListener(EmeraldMarket plugin) {
 		this.plugin = plugin;
 	}
 
@@ -47,7 +47,7 @@ public class EmeraldmarketEventListener implements Listener {
 	public void onOfferAccepted(OfferAcceptedEvent event) {
 		// debug message
 		if (plugin.verbose) {
-			plugin.logger.info("OfferAccepted event called.");
+			EmeraldMarket.getBukkitLogger().info("OfferAccepted event called.");
 		}
 		// we need to inform the first party and give them the loot
 		// this can only be done when the player is online
@@ -57,13 +57,13 @@ public class EmeraldmarketEventListener implements Listener {
 			plugin.notify(firstParty);
 			// some debug messages
 			if (plugin.verbose == true) {
-				plugin.logger.info(event.getSecondParty() + " acccepted an offer from "
+				EmeraldMarket.getBukkitLogger().info(event.getSecondParty() + " acccepted an offer from "
 						+ event.getFirstParty() + ".");
 			}
 		} else {
 			// if they're offline, then we'll just wait until they come online.
 			if (plugin.verbose == true) {
-				plugin.logger.info(event.getSecondParty() + " acccepted an offer from "
+				EmeraldMarket.getBukkitLogger().info(event.getSecondParty() + " acccepted an offer from "
 						+ event.getFirstParty() + " but " + event.getFirstParty()
 						+ " was not online to accept it.");
 			}
@@ -76,13 +76,13 @@ public class EmeraldmarketEventListener implements Listener {
 			plugin.notify(secondParty);
 			// some debug messages
 			if (plugin.verbose == true) {
-				plugin.logger.info(event.getSecondParty() + " acccepted an offer from "
+				EmeraldMarket.getBukkitLogger().info(event.getSecondParty() + " acccepted an offer from "
 						+ event.getFirstParty() + ".");
 			}
 		} else {
 			// if they're offline, then we'll just wait until they come online.
 			if (plugin.verbose == true) {
-				plugin.logger.info(event.getSecondParty() + " acccepted an offer from "
+				EmeraldMarket.getBukkitLogger().info(event.getSecondParty() + " acccepted an offer from "
 						+ event.getFirstParty() + " but " + event.getSecondParty()
 						+ " were not online to accept it.");
 			}
