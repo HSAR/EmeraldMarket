@@ -606,13 +606,12 @@ public class Emeraldmarket extends JavaPlugin {
 				int transactionsMade = 0;
 				// retrieve the date so that we can stamp all relevant DB
 				// entries - done out-of-loop to avoid unnecessary load
-				java.util.Date date = new Date();
-				Object datestamp = new java.sql.Timestamp(date.getTime());
+				Object datestamp = new java.sql.Timestamp((new Date()).getTime());
 				// while the amount the user has requested has not been
 				// satisfied, continue buying.
 				while (amountRemaining > 0) {
 					if (offerRS.next()) {
-						// currentBuy stores the current demand (for this
+						// currentSell stores the current demand (for this
 						// amountRS row)
 						int currentSell;
 						// currentBuy is equal to the lowest integer value
@@ -653,43 +652,26 @@ public class Emeraldmarket extends JavaPlugin {
 						// demand was less than the offer)
 						Statement statementUpdates = connection.createStatement(
 								ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-						if (currentSell == offerRS.getInt("amount")) {
+
+						// just check that the amount to modify by is not
+						// negative, because that would be bad
+						if ((offerRS.getInt("amount") - currentSell) <= 0) {
+							// if it is, something has gone wrong.
+							sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
+							return false;
+						} else {
 							try {
-								statementUpdates
-										.executeUpdate("DELETE FROM emeraldmarket_buy WHERE price = '"
-												+ currency.format(price) + "' AND user = '"
-												+ offerRS.getString("user") + "';");
-								
+								statementUpdates.executeUpdate("UPDATE emeraldmarket_buy SET amount = '"
+										+ (offerRS.getInt("amount") - currentSell) + "' WHERE price = '"
+										+ currency.format(price) + "' AND user = '"
+										+ offerRS.getString("user") + "';");
 							} catch (SQLException e) {
 								sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
 								logger.info(" SQL Exception: " + e);
 								return false;
 							}
-							// if the offer completes, call an event
-							OfferAcceptedEvent OAevent = new OfferAcceptedEvent(OfferType.BUY,
-									offerRS.getString("user"), sender.getName(), price, currentSell);
-							// Call the event
-							Bukkit.getServer().getPluginManager().callEvent(OAevent);
-						} else {
-							// just check that the amount to modify by is not
-							// negative, because that would be bad
-							if ((offerRS.getInt("amount") - currentSell) <= 0) {
-								// if it is, something has gone wrong.
-								sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
-								return false;
-							} else {
-								try {
-									statementUpdates.executeUpdate("UPDATE emeraldmarket_buy SET amount = '"
-											+ (offerRS.getInt("amount") - currentSell) + "' WHERE price = '"
-											+ currency.format(price) + "' AND user = '"
-											+ offerRS.getString("user") + "';");
-								} catch (SQLException e) {
-									sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
-									logger.info(" SQL Exception: " + e);
-									return false;
-								}
-							}
 						}
+
 						// after use, close the statement
 						statementUpdates.close();
 
@@ -702,9 +684,12 @@ public class Emeraldmarket extends JavaPlugin {
 								+ offerRS.getString("alias") + " at " + currency.format(price) + " "
 								+ econ.currencyNamePlural() + ChatColor.GRAY + "/emerald");
 					} else {
-						// if we can't step into offerRS, something's wrong
-						sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
-						return false;
+						// if we've run out of offers but we still have demand,
+						// let the user know
+						if (amountRemaining > 0) {
+							sender.sendMessage(ChatColor.RED + "No more offers!");
+						}
+						return true;
 					}
 				}
 				// it never hurts to double check
@@ -758,8 +743,7 @@ public class Emeraldmarket extends JavaPlugin {
 				int transactionsMade = 0;
 				// retrieve the date so that we can stamp all relevant DB
 				// entries - done out-of-loop to avoid unnecessary load
-				java.util.Date date = new Date();
-				Object datestamp = new java.sql.Timestamp(date.getTime());
+				Object datestamp = new java.sql.Timestamp((new Date()).getTime());
 				// while the amount the user has requested has not been
 				// satisfied, continue buying.
 				while (amountRemaining > 0) {
@@ -805,42 +789,32 @@ public class Emeraldmarket extends JavaPlugin {
 						// demand was less than the offer)
 						Statement statementUpdates = connection.createStatement(
 								ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
-						if (currentBuy == offerRS.getInt("amount")) {
+
+						// just check that the amount to modify by is not
+						// negative, because that would be bad
+						if ((offerRS.getInt("amount") - currentBuy) <= 0) {
+							// if it is, something has gone wrong.
+							sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
+							return false;
+						} else {
 							try {
-								statementUpdates
-										.executeUpdate("DELETE FROM emeraldmarket_sell WHERE price = '"
-												+ currency.format(price) + "' AND user = '"
-												+ offerRS.getString("user") + "';");
+								statementUpdates.executeUpdate("UPDATE emeraldmarket_buy SET amount = '"
+										+ (offerRS.getInt("amount") - currentBuy) + "' WHERE price = '"
+										+ currency.format(price) + "' AND user = '"
+										+ offerRS.getString("user") + "';");
 							} catch (SQLException e) {
 								sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
 								logger.info(" SQL Exception: " + e);
 								return false;
 							}
-							// if the offer completes, call an event
-							OfferAcceptedEvent OAevent = new OfferAcceptedEvent(OfferType.BUY,
-									offerRS.getString("user"), sender.getName(), price, currentBuy);
-							// Call the event
-							Bukkit.getServer().getPluginManager().callEvent(OAevent);
-						} else {
-							// just check that the amount to modify by is not
-							// negative, because that would be bad
-							if ((offerRS.getInt("amount") - currentBuy) <= 0) {
-								// if it is, something has gone wrong.
-								sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
-								return false;
-							} else {
-								try {
-									statementUpdates.executeUpdate("UPDATE emeraldmarket_buy SET amount = '"
-											+ (offerRS.getInt("amount") - currentBuy) + "' WHERE price = '"
-											+ currency.format(price) + "' AND user = '"
-											+ offerRS.getString("user") + "';");
-								} catch (SQLException e) {
-									sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
-									logger.info(" SQL Exception: " + e);
-									return false;
-								}
-							}
 						}
+
+						// if the offer completes, initialise and call an event
+						OfferAcceptedEvent OAevent = new OfferAcceptedEvent(OfferType.BUY,
+								offerRS.getString("user"), sender.getName(), price, currentBuy);
+						// Call the event
+						Bukkit.getServer().getPluginManager().callEvent(OAevent);
+
 						// after use, close the statement
 						statementUpdates.close();
 
@@ -853,9 +827,12 @@ public class Emeraldmarket extends JavaPlugin {
 								+ offerRS.getString("alias") + " at " + currency.format(price) + " "
 								+ econ.currencyNamePlural() + ChatColor.GRAY + "/emerald");
 					} else {
-						// if we can't step into offerRS, something's wrong
-						sender.sendMessage(ChatColor.RED + "Your request could not be processed.");
-						return false;
+						// if we've run out of offers but we still have demand,
+						// let the user know
+						if (amountRemaining > 0) {
+							sender.sendMessage(ChatColor.RED + "No more offers!");
+						}
+						return true;
 					}
 				}
 				// it never hurts to double check
@@ -1063,10 +1040,15 @@ public class Emeraldmarket extends JavaPlugin {
 			getServer().getPluginManager().disablePlugin(this);
 			return;
 		}
+		// check the database for odds and ends to remove
+		checkDatabase();
 	}
 
 	@Override
 	public void onDisable() {
+		// check the database for odds and ends to remove
+		checkDatabase();
+		// then close the database connection before shutting down
 		if (connection != null) {
 			try {
 				connection.close();
@@ -1127,8 +1109,7 @@ public class Emeraldmarket extends JavaPlugin {
 						try {
 							Statement statement = connection.createStatement();
 							// get timestamp for entry to DB
-							java.util.Date date = new Date();
-							Object datestamp = new java.sql.Timestamp(date.getTime());
+							Object datestamp = new java.sql.Timestamp((new Date()).getTime());
 							statement.executeUpdate("INSERT INTO emeraldmarket_sell "
 									+ "(user, alias, price, amount, date) VALUES ('" + sender.getName()
 									+ "', (SELECT masteralias from emeraldmarket_aliases where user = '"
@@ -1186,8 +1167,7 @@ public class Emeraldmarket extends JavaPlugin {
 							Statement statement = connection.createStatement(
 									ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 							// get timestamp for entry to DB
-							java.util.Date date = new Date();
-							Object datestamp = new java.sql.Timestamp(date.getTime());
+							Object datestamp = new java.sql.Timestamp((new Date()).getTime());
 							statement.executeUpdate("INSERT INTO emeraldmarket_buy "
 									+ "(user, alias, price, amount, date) VALUES ('" + sender.getName()
 									+ "', (SELECT masteralias from emeraldmarket_aliases where user = '"
@@ -1281,7 +1261,6 @@ public class Emeraldmarket extends JavaPlugin {
 			int totalEmeraldsGained = 0;
 			// variable to store the total money gained
 			double totalMoneyGained = 0d;
-			player.sendMessage(ChatColor.DARK_GREEN + "FISH 4");
 			if (resultset != null) {
 				// if there is something, complete the buy.
 				// move pointer before the first line ready for cycling through.
@@ -1308,13 +1287,13 @@ public class Emeraldmarket extends JavaPlugin {
 										+ "WHERE seller = '" + player.getDisplayName()
 										+ "' AND dateaccepted = '" + resultset.getString("dateaccepted")
 										+ "';");
-
-						player.sendMessage(ChatColor.DARK_GREEN + "FISH 5");
 					}
 				}
-				// summarise
-				player.sendMessage(ChatColor.DARK_GREEN + "You have received " + ChatColor.WHITE
-						+ totalEmeraldsGained + ChatColor.DARK_GREEN + " emeralds in total.");
+				if (totalEmeraldsGained >= 1) {
+					// summarise if something gained
+					player.sendMessage(ChatColor.DARK_GREEN + "You have received " + ChatColor.WHITE
+							+ totalEmeraldsGained + ChatColor.DARK_GREEN + " emeralds in total.");
+				}
 			}
 			// clear resultset for next round.
 			if (resultset != null) {
@@ -1323,8 +1302,6 @@ public class Emeraldmarket extends JavaPlugin {
 			// completed SELL offers next
 			resultset = statementDeals.executeQuery("SELECT * FROM emeraldmarket_deals WHERE seller = '"
 					+ player.getDisplayName() + "' AND sellernotified = 0;");
-
-			player.sendMessage(ChatColor.DARK_GREEN + "FISH 6");
 			if (resultset != null) {
 				// if there is something, complete the sell.
 				// move pointer before the first line ready for cycling through.
@@ -1337,8 +1314,8 @@ public class Emeraldmarket extends JavaPlugin {
 						totalMoneyGained = totalMoneyGained + credit;
 						// add the money.
 						econ.depositPlayer(player.getName(), credit);
-						player.sendMessage(ChatColor.DARK_GREEN + "You have sold " + ChatColor.WHITE + credit
-								+ " emeralds " + ChatColor.DARK_GREEN + "to "
+						player.sendMessage(ChatColor.DARK_GREEN + "You have sold " + ChatColor.WHITE
+								+ resultset.getInt("amount") + " emeralds " + ChatColor.DARK_GREEN + "to "
 								+ resultset.getString("sellalias") + " at " + ChatColor.WHITE
 								+ resultset.getDouble("price") + " per emerald.");
 						// set sellernotified to true now that we're done
@@ -1349,14 +1326,14 @@ public class Emeraldmarket extends JavaPlugin {
 										+ "WHERE seller = '" + player.getDisplayName()
 										+ "' AND dateaccepted = '" + resultset.getString("dateaccepted")
 										+ "';");
-
-						player.sendMessage(ChatColor.DARK_GREEN + "FISH 7");
 					}
 				}
-				// summarise.
-				player.sendMessage(ChatColor.DARK_GREEN + "You have earned " + ChatColor.WHITE
-						+ currency.format(totalMoneyGained) + " " + ChatColor.DARK_GREEN
-						+ econ.currencyNamePlural() + " in total.");
+				if (totalMoneyGained > 0) {
+					// summarise if something gained
+					player.sendMessage(ChatColor.DARK_GREEN + "You have earned " + ChatColor.WHITE
+							+ currency.format(totalMoneyGained) + " " + ChatColor.DARK_GREEN
+							+ econ.currencyNamePlural() + " in total.");
+				}
 				// close statement
 				statementDeals.close();
 			}
@@ -1379,4 +1356,47 @@ public class Emeraldmarket extends JavaPlugin {
 		}
 	}
 
+	public void markComplete() {
+		// this method adds a date of completion to deals when
+		// both the seller and the buyer have been notified
+		try {
+			// get timestamp for entry to DB
+			Object datestamp = new java.sql.Timestamp((new Date()).getTime());
+			// start database connection
+			Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+					ResultSet.CONCUR_READ_ONLY);
+			statement.executeUpdate("UPDATE emeraldmarket_deals SET datecompleted = '" + datestamp + "';");
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void removeCompletedDeals(Timestamp input) {
+
+	}
+
+	public void removeEmptyOffers() {
+		// this method deletes offers with no supply remaining
+		try {
+			Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+					ResultSet.CONCUR_READ_ONLY);
+			statement.executeUpdate("DELETE FROM emeraldmarket_buy WHERE amount = '0';");
+			statement.executeUpdate("DELETE FROM emeraldmarket_sell WHERE amount = '0';");
+			statement.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+	public void checkDatabase() {
+		// trims the database so only required things are stored
+		// add completion datestamps to completed deals
+		markComplete();
+		// delete all deals older than 1 week (168 hours)
+		//removeCompletedDeals();
+		// remove all offers with 0 amount remaining
+		removeEmptyOffers();
+	}
 }
