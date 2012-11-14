@@ -45,6 +45,10 @@ public class EmeraldmarketEventListener implements Listener {
 
 	@EventHandler(priority = EventPriority.NORMAL)
 	public void onOfferAccepted(OfferAcceptedEvent event) {
+		// debug message
+		if (plugin.verbose) {
+			plugin.logger.info("OfferAccepted event called.");
+		}
 		// we need to inform the first party and give them the loot
 		// this can only be done when the player is online
 		Player firstParty = (Bukkit.getServer().getPlayer(event.getFirstParty()));
@@ -83,5 +87,7 @@ public class EmeraldmarketEventListener implements Listener {
 						+ " were not online to accept it.");
 			}
 		}
+		// finally, run the database cleanup
+		plugin.checkDatabase();
 	}
 }
