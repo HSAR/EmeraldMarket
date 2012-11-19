@@ -19,8 +19,7 @@ public class EmeraldMarketCommandExecutor implements CommandExecutor {
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		// shortcut to administrate
 		if (cmd.getName().equalsIgnoreCase("emeraldmarketadmin")) {
-			if (sender.hasPermission("emeraldmarket.admin.settings")) { // Admin
-																		// settings
+			if (sender.hasPermission("emeraldmarket.admin.settings")) {
 				if (args.length < 1) {
 					// if no arguments supplied, show help.
 					return false;

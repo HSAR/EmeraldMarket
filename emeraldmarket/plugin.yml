@@ -2,6 +2,7 @@ name: EmeraldMarket
 main: com.flashofsilver.emeraldmarket.Emeraldmarket
 version: 0.2
 depend: [Vault]
+softdepend: [WorldGuard]
 commands:
    emeraldmarket:
       description: Base EM command
@@ -65,7 +66,6 @@ permissions:
     emeraldmarket.basic.buy.takeselloffer:
         description: Allows you to take sell offers.
         default: true
-        
     emeraldmarket.basic.sell.*:
         description: Allows you to make sell offers and take buy offers.
         default: true
@@ -78,17 +78,20 @@ permissions:
     emeraldmarket.basic.sell.takebuyoffer:
         description: Allows you to take buy offers.
         default: true    
-            
     emeraldmarket.admin.*:
         default: op
         description: Allows use of all admin commands
         children:
             emeraldmarket.admin.offers: true
             emeraldmarket.admin.settings: true
+            emeraldmarket.admin.bypass: true
     emeraldmarket.admin.offers:
         default: op
         description: Allows market administration (endless offers, for instance)
     emeraldmarket.admin.settings:
         default: op
         description: Allows editing, saving and reloading of the configuration
+    emeraldmarket.admin.bypass:
+        default: op
+        description: User can use EM without being in a WorldGuard region with emeraldmarket:allow
             

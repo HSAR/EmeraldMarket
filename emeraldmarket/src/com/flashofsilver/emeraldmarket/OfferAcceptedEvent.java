@@ -3,7 +3,7 @@ package com.flashofsilver.emeraldmarket;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
-import com.flashofsilver.emeraldmarket.Emeraldmarket.OfferType;
+import com.flashofsilver.emeraldmarket.EmeraldMarket.OfferType;
 
 public class OfferAcceptedEvent extends Event {
 	private final OfferType type;
