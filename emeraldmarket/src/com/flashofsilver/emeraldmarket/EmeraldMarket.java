@@ -68,7 +68,7 @@ public class EmeraldMarket extends JavaPlugin {
 	public static EmeraldMarket getPlugin() {
 		return plugin;
 	}
-	
+
 	public static String getPluginName() {
 		return description.getName();
 	}
@@ -1017,7 +1017,7 @@ public class EmeraldMarket extends JavaPlugin {
 		logger = getLogger();
 
 		// register events
-		pluginManager.registerEvents(new EmeraldMarketEventListener(this), this);
+		pluginManager.registerEvents(new EmeraldMarketEventListener(plugin), plugin);
 		// save config to default location if not already there
 		this.saveDefaultConfig();
 		// verbose logging? retrieve value from config file.
@@ -1152,7 +1152,10 @@ public class EmeraldMarket extends JavaPlugin {
 							int amountremaining = amount;
 							if (!(offerRS == null) && (offerRS.first())) {
 								// if there's a result, accept it.
-								amountremaining = amountremaining - runSellOffer(sender, price, amount);
+								int deltaCredit = runSellOffer(sender, price, amount);
+								if (deltaCredit > 0) {
+								amountremaining = amountremaining - deltaCredit;
+								}
 							}
 							// get timestamp for entry to DB
 							Object datestamp = new java.sql.Timestamp((new Date()).getTime());
@@ -1225,7 +1228,10 @@ public class EmeraldMarket extends JavaPlugin {
 							int amountremaining = amount;
 							if (!(offerRS == null) && (offerRS.first())) {
 								// if there's a result, accept it.
-								amountremaining = amountremaining - runSellOffer(sender, price, amount);
+								int deltaCredit = runSellOffer(sender, price, amount);
+								if (deltaCredit > 0) {
+								amountremaining = amountremaining - deltaCredit;
+								}
 							}
 							// get timestamp for entry to DB
 							Object datestamp = new java.sql.Timestamp((new Date()).getTime());
@@ -1347,7 +1353,7 @@ public class EmeraldMarket extends JavaPlugin {
 						Statement statementDealsClosed = connection.createStatement(
 								ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
 						statementDealsClosed
-								.executeUpdate("UPDATE emeraldmarket_deals SET sellernotified = 1 "
+								.executeUpdate("UPDATE emeraldmarket_deals SET buyernotified = 1 "
 										+ "WHERE seller = '" + player.getDisplayName()
 										+ "' AND dateaccepted = '" + resultset.getString("dateaccepted")
 										+ "';");
@@ -1405,18 +1411,6 @@ public class EmeraldMarket extends JavaPlugin {
 		} catch (SQLException e) {
 			player.sendMessage(ChatColor.RED + "There was a problem.");
 			e.printStackTrace();
-		}
-
-		// #XXX Test this works in-game.
-		PlayerInventory inventory = player.getInventory();
-		ItemStack itemstack = new ItemStack(Material.EMERALD, 64); // A stack of
-																	// emeralds
-
-		player.sendMessage(ChatColor.DARK_GREEN + "FISH 8");
-		if (inventory.contains(itemstack)) {
-			inventory.addItem(itemstack); // Adds a stack of emeralds to the
-											// player's inventory
-			player.sendMessage("Welcome! You seem to be reeeally rich, so we gave you some more emeralds!");
 		}
 	}
 

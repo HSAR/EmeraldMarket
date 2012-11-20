@@ -1,12 +1,12 @@
 name: EmeraldMarket
-main: com.flashofsilver.emeraldmarket.Emeraldmarket
+main: com.flashofsilver.emeraldmarket.EmeraldMarket
 version: 0.2
 depend: [Vault]
 softdepend: [WorldGuard]
 commands:
    emeraldmarket:
       description: Base EM command
-      usage: /emeraldmarket [buy/sell] [number] [price]
+      usage: /emeraldmarket [buy/sell] [price] [number]
       permission: emeraldmarket.basic.*
       permission-message: You don't have permission to use this.
       aliases: [em]
