@@ -1130,6 +1130,7 @@ public class EmeraldMarket extends JavaPlugin {
 				// check the player actually has enough emeralds
 				double price = Double.parseDouble(args[0]);
 				int amount = Integer.parseInt(args[1]);
+				int amountremaining = amount;
 				// first, retrieve the player's inventory
 				Player player = (Player) sender;
 				PlayerInventory inventory = player.getInventory();
@@ -1149,7 +1150,6 @@ public class EmeraldMarket extends JavaPlugin {
 							ResultSet offerRS = statement.executeQuery("SELECT price "
 									+ "FROM emeraldmarket_buy" + " WHERE price = '" + currency.format(price)
 									+ "' ORDER BY date;");
-							int amountremaining = amount;
 							if (!(offerRS == null) && (offerRS.first())) {
 								// if there's a result, accept it.
 								int deltaCredit = runSellOffer(sender, price, amount);
@@ -1175,8 +1175,8 @@ public class EmeraldMarket extends JavaPlugin {
 							inventory.removeItem(itemstack);
 							econ.withdrawPlayer(sender.getName(), Integer.parseInt(args[1]));
 							sender.sendMessage(ChatColor.DARK_GREEN + "Placed sell offer for "
-									+ ChatColor.WHITE + args[1] + " emeralds " + ChatColor.DARK_GREEN + "at "
-									+ ChatColor.WHITE + args[0] + " per emerald.");
+									+ ChatColor.WHITE + amountremaining + " emeralds " + ChatColor.DARK_GREEN + "at "
+									+ ChatColor.WHITE + currency.format(price) + " per emerald.");
 						}
 					} else {
 						sender.sendMessage(ChatColor.RED + "Database Error: "
@@ -1212,6 +1212,7 @@ public class EmeraldMarket extends JavaPlugin {
 				// transaction - if so, begin.
 				double price = Double.parseDouble(args[0]);
 				int amount = Integer.parseInt(args[1]);
+				int amountremaining = amount;
 				if (price <= econ.getBalance(sender.getName())) {
 					// prep data - USER, PRICE, AMOUNT and DATE.
 					// Also retrieve or create ALIAS, a 4-letter alias.
@@ -1225,7 +1226,6 @@ public class EmeraldMarket extends JavaPlugin {
 							ResultSet offerRS = statement.executeQuery("SELECT price "
 									+ "FROM emeraldmarket_sell" + " WHERE price = '" + currency.format(price)
 									+ "' ORDER BY date;");
-							int amountremaining = amount;
 							if (!(offerRS == null) && (offerRS.first())) {
 								// if there's a result, accept it.
 								int deltaCredit = runSellOffer(sender, price, amount);
@@ -1252,9 +1252,9 @@ public class EmeraldMarket extends JavaPlugin {
 									Double.parseDouble(args[0]));
 							if (r.transactionSuccess()) {
 								sender.sendMessage(ChatColor.DARK_GREEN + "Placed buy offer for "
-										+ ChatColor.WHITE + args[1] + " emeralds " + ChatColor.DARK_GREEN
+										+ ChatColor.WHITE + amountremaining + " emeralds " + ChatColor.DARK_GREEN
 										+ "at " + ChatColor.WHITE
-										+ currency.format(Double.parseDouble(args[0])) + " "
+										+ currency.format(price) + " "
 										+ econ.currencyNamePlural() + " per emerald.");
 
 							} else {
