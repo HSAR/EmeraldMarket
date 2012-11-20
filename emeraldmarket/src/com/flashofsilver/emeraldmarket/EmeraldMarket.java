@@ -504,7 +504,8 @@ public class EmeraldMarket extends JavaPlugin {
 					+ "alias  VARCHAR( 4 ) NOT NULL REFERENCES emeraldmarket_aliases( masteralias ) "
 					+ "ON DELETE RESTRICT ON UPDATE CASCADE MATCH FULL, money  DOUBLE( 64, 2 )  "
 					+ "NOT NULL, emeralds INT( 5 ) NOT NULL, date DATETIME NOT NULL, "
-					+ "datecomplete DATETIME DEFAULT NULL, PRIMARY KEY (user, date) );");
+					+ "datecomplete DATETIME DEFAULT NULL, notified BIT NOT NULL DEFAULT 0, "
+					+ "PRIMARY KEY (user, date) );");
 		} catch (SQLException e) {
 			logger.info(" SQL Exception: " + e);
 			return false;
@@ -1154,7 +1155,7 @@ public class EmeraldMarket extends JavaPlugin {
 								// if there's a result, accept it.
 								int deltaCredit = runSellOffer(sender, price, amount);
 								if (deltaCredit > 0) {
-								amountremaining = amountremaining - deltaCredit;
+									amountremaining = amountremaining - deltaCredit;
 								}
 							}
 							// get timestamp for entry to DB
@@ -1175,8 +1176,8 @@ public class EmeraldMarket extends JavaPlugin {
 							inventory.removeItem(itemstack);
 							econ.withdrawPlayer(sender.getName(), Integer.parseInt(args[1]));
 							sender.sendMessage(ChatColor.DARK_GREEN + "Placed sell offer for "
-									+ ChatColor.WHITE + amountremaining + " emeralds " + ChatColor.DARK_GREEN + "at "
-									+ ChatColor.WHITE + currency.format(price) + " per emerald.");
+									+ ChatColor.WHITE + amountremaining + " emeralds " + ChatColor.DARK_GREEN
+									+ "at " + ChatColor.WHITE + currency.format(price) + " per emerald.");
 						}
 					} else {
 						sender.sendMessage(ChatColor.RED + "Database Error: "
@@ -1230,7 +1231,7 @@ public class EmeraldMarket extends JavaPlugin {
 								// if there's a result, accept it.
 								int deltaCredit = runSellOffer(sender, price, amount);
 								if (deltaCredit > 0) {
-								amountremaining = amountremaining - deltaCredit;
+									amountremaining = amountremaining - deltaCredit;
 								}
 							}
 							// get timestamp for entry to DB
@@ -1252,10 +1253,10 @@ public class EmeraldMarket extends JavaPlugin {
 									Double.parseDouble(args[0]));
 							if (r.transactionSuccess()) {
 								sender.sendMessage(ChatColor.DARK_GREEN + "Placed buy offer for "
-										+ ChatColor.WHITE + amountremaining + " emeralds " + ChatColor.DARK_GREEN
-										+ "at " + ChatColor.WHITE
-										+ currency.format(price) + " "
-										+ econ.currencyNamePlural() + " per emerald.");
+										+ ChatColor.WHITE + amountremaining + " emeralds "
+										+ ChatColor.DARK_GREEN + "at " + ChatColor.WHITE
+										+ currency.format(price) + " " + econ.currencyNamePlural()
+										+ " per emerald.");
 
 							} else {
 								sender.sendMessage(String.format("An error occured: %s", r.errorMessage));
@@ -1286,7 +1287,7 @@ public class EmeraldMarket extends JavaPlugin {
 			Statement statementRefunds = connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE,
 					ResultSet.CONCUR_READ_ONLY);
 			resultset = statementRefunds.executeQuery("SELECT * FROM emeraldmarket_refunds WHERE user = '"
-					+ player.getDisplayName() + "';");
+					+ player.getDisplayName() + "' AND notified = 0;");
 			if (resultset != null) {
 				// if there is something, execute the refund.
 				// move pointer before the first line ready for cycling through.
@@ -1304,6 +1305,10 @@ public class EmeraldMarket extends JavaPlugin {
 						inventory.addItem(emstack);
 						player.sendMessage(ChatColor.DARK_GREEN + "You have been refunded " + ChatColor.WHITE
 								+ emeralds + " emeralds " + ChatColor.DARK_GREEN + "by an admin.");
+						if (verbose) {
+							logger.info("User " + player.getName() + " was refunded " + emeralds
+									+ " emeralds.");
+						}
 					}
 					if ((emeralds == 0) && (money > 0)) {
 						// add the money.
@@ -1311,6 +1316,14 @@ public class EmeraldMarket extends JavaPlugin {
 						player.sendMessage(ChatColor.DARK_GREEN + "You have been refunded " + ChatColor.WHITE
 								+ currency.format(money) + " " + ChatColor.DARK_GREEN
 								+ econ.currencyNamePlural() + " by an admin.");
+					}
+					// ^ operator is XOR
+					if ((emeralds == 0) ^ (money > 0)) {
+						// set "notified" flag to true so that we won't process
+						// this again
+						statementRefunds.executeQuery("UPDATE emeraldmarket_refunds SET sellernotified = 1 "
+								+ " WHERE user = '" + player.getName() + "' AND date = '"
+								+ resultset.getString("date") + "';");
 					}
 				}
 			}
