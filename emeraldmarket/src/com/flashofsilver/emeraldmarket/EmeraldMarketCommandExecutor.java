@@ -39,8 +39,7 @@ public class EmeraldMarketCommandExecutor implements CommandExecutor {
 						// partial name recognition
 						String aliasinput;
 						if (plugin.matchPartialUser(sender, args[1]) == null) {
-							// if there's a problem matching the user,
-							// terminate.
+							// if there's a problem matching the user, terminate.
 							return true;
 						} else {
 							aliasinput = plugin.matchPartialUser(sender, args[1]);

@@ -25,7 +25,6 @@ public class EmeraldMarketEventListener implements Listener {
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		// check if they have any deals outstanding
 		plugin.notify(event.getPlayer());
-		// #XXX ^ fix problems with the above method
 	}
 
 	@EventHandler(priority = EventPriority.NORMAL)
