@@ -1,7 +1,7 @@
 name: EmeraldMarket
 main: com.flashofsilver.emeraldmarket.EmeraldMarket
 version: 0.2
-depend: [Vault]
+depend: [Vault, Questioner]
 softdepend: [WorldGuard]
 commands:
    emeraldmarket:
